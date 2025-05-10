@@ -1,17 +1,18 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
-using Bunny.LibSql.Client.ORM.Attributes;
+using Bunny.LibSql.Client.Attributes;
 
 namespace Bunny.LibSql.Client;
 
 public static class LibSqlExtensions
 {
-    private static readonly HashSet<string> _defaultPrimaryKeyColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> _defaultPrimaryKeyColumns = new (StringComparer.OrdinalIgnoreCase)
     {
         "Id", "Key", "ID", "KeyId", "Key_ID"
     };
 
+    #region Cache Dictionaries
     [ThreadStatic]
     private static Dictionary<Type, string>? _cachedTableNames = [];
     
@@ -23,7 +24,8 @@ public static class LibSqlExtensions
     
     [ThreadStatic]
     private static Dictionary<Type, Dictionary<string, PropertyInfo>>? _cachedMappableProperties = [];
-
+    #endregion
+    
     public static PropertyInfo GetLibSqlPrimaryKeyProperty(this object item) => GetLibSqlPrimaryKeyProperty(item.GetType());
 
     public static PropertyInfo GetLibSqlPrimaryKeyProperty(this Type type)

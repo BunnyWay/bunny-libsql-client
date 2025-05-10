@@ -1,7 +1,7 @@
 using System.Reflection;
-using Bunny.LibSql.Client.LINQ;
 using Bunny.LibSql.Client.Migrations;
 using Bunny.LibSql.Client.Migrations.InternalModels;
+using Bunny.LibSql.Client.SQL;
 
 namespace Bunny.LibSql.Client;
 

@@ -1,8 +1,9 @@
 using System.Text;
+using Bunny.LibSql.Client.SQL;
 
 namespace Bunny.LibSql.Client.LINQ;
 
-public class QueryBuilder
+public class SqlQueryBuilder
 {
     public static SqlQuery BuildInsertQuery<T>(string tableName, object obj)
     {

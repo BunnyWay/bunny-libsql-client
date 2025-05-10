@@ -1,4 +1,4 @@
-namespace Bunny.LibSql.Client.ORM.Attributes;
+namespace Bunny.LibSql.Client.Attributes;
 
 public class AutoIncludeAttribute : Attribute
 {

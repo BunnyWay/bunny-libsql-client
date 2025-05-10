@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace Bunny.LibSql.Client;
+namespace Bunny.LibSql.Client.LINQ;
 
 public class JoinNavigation(
     Type leftDataType,

@@ -2,7 +2,7 @@
 using Bunny.LibSql.Client.Demo;
 using Bunny.LibSql.Client.LINQ;
 
-var dbUrl = "";
+var dbUrl = "https://harevis-bunnynet.turso.io/";
 var accessKey = "";
 //var accessKey = "";
 
@@ -16,7 +16,7 @@ await db.ApplyMigrationsAsync();
 catch (Exception ex)
 {
     
-} 
+}
 try
 {
     await db.Client.QueryAsync("DROP TABLE Product");

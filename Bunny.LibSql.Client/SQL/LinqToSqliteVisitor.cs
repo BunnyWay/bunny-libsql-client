@@ -47,6 +47,11 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         else
         {
             var tableName = GetTableName(expression);
+            if (tableName == null)
+            {
+                throw new InvalidOperationException("Unable to determine table name for SELECT clause.");
+            }
+            
             if (!string.IsNullOrEmpty(tableName))
                 finalSql.Append($"{tableName}.*");
             else
@@ -59,7 +64,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         }
 
         // FROM clause with LEFT JOINs
-        var mainTable = GetTableName(expression) ?? "YourTable";
+        var mainTable = GetTableName(expression);
         finalSql.Append(" FROM ");
         finalSql.Append(mainTable);
 
@@ -104,7 +109,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         return (finalSql.ToString().TrimEnd() + ";", _parameters);
     }
 
-    private string GetTableName(Expression expression)
+    private string? GetTableName(Expression expression)
     {
         if (expression is MethodCallExpression methodCall)
         {

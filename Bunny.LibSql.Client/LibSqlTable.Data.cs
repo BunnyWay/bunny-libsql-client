@@ -1,3 +1,4 @@
+using Bunny.LibSql.Client.HttpClientModels;
 using Bunny.LibSql.Client.LINQ;
 
 namespace Bunny.LibSql.Client;
@@ -9,7 +10,7 @@ public partial class LibSqlTable<T>
         if(item == null)
             throw new ArgumentNullException(nameof(item));
         
-        var query = QueryBuilder.BuildInsertQuery<T>(TableName, item);
+        var query = SqlQueryBuilder.BuildInsertQuery<T>(TableName, item);
         var resp = await Db.Client.QueryAsync(query);
         AssignLastInsertRowId(item, resp);
     }
@@ -22,12 +23,11 @@ public partial class LibSqlTable<T>
             throw new ArgumentException($"The item does not have a value for the primary key '{PrimaryKeyProperty}'.");
         }
         
-        var query = QueryBuilder.BuildDeleteQuery(TableName, PrimaryKeyProperty.Name, keyValue);
+        var query = SqlQueryBuilder.BuildDeleteQuery(TableName, PrimaryKeyProperty.Name, keyValue);
         await Db.Client.QueryAsync(query);
     }
     
-    // TODO: update
-    
+    // TODO: update this and add a test
     private void AssignLastInsertRowId(T item, PipelineResponse? pipelineResponse)
     {
         var newKey = pipelineResponse?.Results?.FirstOrDefault()?.Response?.Result?.LastInsertRowId;

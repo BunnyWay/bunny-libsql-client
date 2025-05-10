@@ -1,4 +1,4 @@
-namespace Bunny.LibSql.Client.LINQ;
+namespace Bunny.LibSql.Client.SQL;
 
 public record SqlQuery(string sql, object[]? args = null)
 {

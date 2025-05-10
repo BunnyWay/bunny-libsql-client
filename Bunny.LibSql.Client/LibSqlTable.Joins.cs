@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq.Expressions;
 using System.Reflection;
 using Bunny.LibSql.Client.Extensions;
+using Bunny.LibSql.Client.LINQ;
 
 namespace Bunny.LibSql.Client;
 
@@ -44,7 +45,6 @@ public partial class LibSqlTable<T>
         foreach (var property in autoIncludeProperties)
         {
             var joinNavigation = GenerateJoinNavigation(property.Value);
-            // Recursive load
             JoinNavigations.Add(joinNavigation);
             LoadRecursiveAutoIncludesForType(joinNavigation.RightDataType);
         }

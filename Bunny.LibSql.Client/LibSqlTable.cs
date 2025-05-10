@@ -7,6 +7,11 @@ using Bunny.LibSql.Client.Extensions;
 
 namespace Bunny.LibSql.Client;
 
+// TODO: explore whether we can add a "query tracker" to LINQ to get metrics for the exact queries etc.
+// TODO: add one-to-one and one-to-many support
+// TODO: add data validation support
+// TODO: add change tracking?
+
 public partial class LibSqlTable<T> : IQueryable<T>
 {
     public readonly string TableName;

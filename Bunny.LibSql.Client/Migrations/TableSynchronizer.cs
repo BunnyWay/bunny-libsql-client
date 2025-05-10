@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Reflection;
+using Bunny.LibSql.Client.Attributes;
 using Bunny.LibSql.Client.Migrations.InternalModels;
-using Bunny.LibSql.Client.ORM.Attributes;
+using Bunny.LibSql.Client.SQL;
 
 namespace Bunny.LibSql.Client.Migrations;
 

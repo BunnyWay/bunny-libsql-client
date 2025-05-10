@@ -11,6 +11,9 @@ public static class LibSqlTypeExtensions
 
     public static bool IsLibSqlSupportedType(this Type type)
     {
+        // TODO: add support for nullable types
+        // TODO: add support for other types
+        
         if (type == typeof(int))
             return true;
         if (type == typeof(long))

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Bunny.LibSql.Client.ORM.Attributes;
+using Bunny.LibSql.Client.Attributes;
 
 namespace Bunny.LibSql.Client.Demo;
 

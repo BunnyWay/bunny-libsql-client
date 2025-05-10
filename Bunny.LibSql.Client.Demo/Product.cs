@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Bunny.LibSql.Client.Attributes;
 using Bunny.LibSql.Client.Demo;
-using Bunny.LibSql.Client.ORM.Attributes;
 
 namespace Bunny.LibSql.Client.Demo;
 

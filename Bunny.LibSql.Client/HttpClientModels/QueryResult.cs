@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Bunny.LibSql.Client.Json;
+namespace Bunny.LibSql.Client.HttpClientModels;
 
 public class QueryResult
 {

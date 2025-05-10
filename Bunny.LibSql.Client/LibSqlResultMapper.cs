@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Reflection;
+using Bunny.LibSql.Client.HttpClientModels;
 using Bunny.LibSql.Client.Json;
 using Bunny.LibSql.Client.Json.Enums;
+using Bunny.LibSql.Client.LINQ;
 
 namespace Bunny.LibSql.Client;
 
@@ -78,6 +80,7 @@ public static class LibSqlResultMapper
         var parentyId = $"{join.LeftDataType.FullName}_{primaryKeyValue}";
         if (joinMapper.TryGetValue(parentyId, out var parentItem))
         {
+            // TODO check if the property is a list, otherwise assign the property
             var list = (IList)join.LeftProperty.GetValue(parentItem);
             list.Add(mappedItem);
         }
