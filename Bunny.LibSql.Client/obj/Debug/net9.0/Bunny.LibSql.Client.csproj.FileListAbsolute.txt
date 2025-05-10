@@ -1,0 +1,12 @@
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/bin/Debug/net9.0/Bunny.LibSql.Client.deps.json
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/bin/Debug/net9.0/Bunny.LibSql.Client.dll
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/bin/Debug/net9.0/Bunny.LibSql.Client.pdb
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/obj/Debug/net9.0/Bunny.LibSql.Client.GeneratedMSBuildEditorConfig.editorconfig
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/obj/Debug/net9.0/Bunny.LibSql.Client.AssemblyInfoInputs.cache
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/obj/Debug/net9.0/Bunny.LibSql.Client.AssemblyInfo.cs
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/obj/Debug/net9.0/Bunny.LibSql.Client.csproj.CoreCompileInputs.cache
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/obj/Debug/net9.0/Bunny.LibSql.Client.sourcelink.json
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/obj/Debug/net9.0/Bunny.LibSql.Client.dll
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/obj/Debug/net9.0/refint/Bunny.LibSql.Client.dll
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/obj/Debug/net9.0/Bunny.LibSql.Client.pdb
+/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/obj/Debug/net9.0/ref/Bunny.LibSql.Client.dll

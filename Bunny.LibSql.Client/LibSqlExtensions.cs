@@ -13,16 +13,16 @@ public static class LibSqlExtensions
     };
 
     [ThreadStatic]
-    private static Dictionary<Type, string>? _cachedTableNames = new();
+    private static Dictionary<Type, string>? _cachedTableNames = [];
     
     [ThreadStatic]
-    private static Dictionary<Type, PropertyInfo>? _cachedPrimaryKeys = new();
+    private static Dictionary<Type, PropertyInfo>? _cachedPrimaryKeys = [];
     
     [ThreadStatic]
-    private static Dictionary<Type, Dictionary<string, PropertyInfo>>? _cachedAutoIncludeProperties = new();
+    private static Dictionary<Type, Dictionary<string, PropertyInfo>>? _cachedAutoIncludeProperties = [];
     
     [ThreadStatic]
-    private static Dictionary<Type, Dictionary<string, PropertyInfo>>? _cachedMappableProperties = new();
+    private static Dictionary<Type, Dictionary<string, PropertyInfo>>? _cachedMappableProperties = [];
 
     public static PropertyInfo GetLibSqlPrimaryKeyProperty(this object item) => GetLibSqlPrimaryKeyProperty(item.GetType());
 

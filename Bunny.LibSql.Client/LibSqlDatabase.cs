@@ -7,9 +7,9 @@ namespace Bunny.LibSql.Client;
 
 public abstract class LibSqlDatabase
 {
-    public LibSqlClient Client { get; set; }
-    
-    public LibSqlDatabase(LibSqlClient client)
+    public LibSqlClient Client { get; }
+
+    protected LibSqlDatabase(LibSqlClient client)
     {
         Client = client;
         InitializeTables();
@@ -17,8 +17,7 @@ public abstract class LibSqlDatabase
 
     private void InitializeTables()
     {
-        var tables = GetAllTables();
-        foreach (var table in tables)
+        foreach (var table in GetAllTablesInCurrentDatabaseObject())
         {
             table.SetValue(this, Activator.CreateInstance(table.PropertyType, this));
         }
@@ -26,31 +25,27 @@ public abstract class LibSqlDatabase
     
     public async Task ApplyMigrationsAsync()
     {
-        var tables = GetAllTables();
+        var tables = GetAllTablesInCurrentDatabaseObject();
         foreach (var table in tables)
         {
-            var tableValue = (ITable)table.GetValue(this);
-            
-            var indexes = await Client.QueryAsync<SqlMasterInfo>($"SELECT * FROM sqlite_master WHERE type= 'index' and tbl_name = '{tableValue.GetName()}'");
-            var tableInfos = await Client.QueryAsync<TableInfo>($"pragma table_info({tableValue.GetName()})");
+            var tableName = table.GetType().GetLibSqlTableName();
+            var indexes = await Client.QueryAsync<SqlMasterInfo>($"SELECT * FROM sqlite_master WHERE type= 'index' and tbl_name = '{tableName}'");
+            var tableInfos = await Client.QueryAsync<TableInfo>($"pragma table_info({tableName})");
 
-            // Get T type of the table type
-            var tType = table.PropertyType.GetGenericArguments()[0];
-            
-            var commands = TableSynchronizer.GenerateSqlCommands(tType, tableInfos, indexes);
+            var tableMemberType = table.PropertyType.GetGenericArguments()[0];
+            var commands = TableSynchronizer.GenerateSqlCommands(tableMemberType, tableInfos, indexes);
             if (commands.Count > 0)
             {
                 await Client.QueryMultipleAsync(commands.Select(e => new SqlQuery(e)).ToList());
             }
         }
     }
-    
-    public List<PropertyInfo> GetAllTables()
+
+    private List<PropertyInfo> GetAllTablesInCurrentDatabaseObject()
     {
-        return this.GetType()
+        return GetType()
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.PropertyType.IsGenericType
-                        && p.PropertyType.GetGenericTypeDefinition() == typeof(LibSqlTable<>))
+            .Where(p => p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(LibSqlTable<>))
             .ToList();
     }
 }

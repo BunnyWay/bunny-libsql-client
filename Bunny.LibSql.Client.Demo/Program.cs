@@ -2,12 +2,13 @@
 using Bunny.LibSql.Client.Demo;
 using Bunny.LibSql.Client.LINQ;
 
-var dbUrl = "https://harevis-bunnynet.turso.io/";
+var dbUrl = "";
 var accessKey = "";
 //var accessKey = "";
 
-
 var db = new TestDd(dbUrl, accessKey);
+await db.ApplyMigrationsAsync();
+
 /*try
 {
     await db.Client.QueryAsync("DROP TABLE Person");

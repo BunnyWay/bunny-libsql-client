@@ -1,13 +1,13 @@
 public static class LibSqlTypeExtensions
 {
-    private static HashSet<Type> _supportedTypes = new HashSet<Type>()
-    {
+    private static HashSet<Type> _supportedTypes =
+    [
         typeof(int),
         typeof(long),
         typeof(float),
         typeof(string),
-        typeof(double),
-    };
+        typeof(double)
+    ];
 
     public static bool IsLibSqlSupportedType(this Type type)
     {

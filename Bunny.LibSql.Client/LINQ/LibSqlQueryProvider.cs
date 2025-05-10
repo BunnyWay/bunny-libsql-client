@@ -4,37 +4,38 @@ namespace Bunny.LibSql.Client.LINQ;
 
 public class LibSqlQueryProvider<T> : IQueryProvider
 {
-    public LibSqlTable<T> Table { get; set; }
+    private LibSqlTable<T> _table;
     public LibSqlQueryProvider(LibSqlTable<T> table)
     {
-        this.Table = table;
+        _table = table;
     }
     
     public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
     {
-        var visitor = new LinqToSqliteVisitor(Table.JoinNavigations);
+        var visitor = new LinqToSqliteVisitor(_table.JoinNavigations);
         var query = visitor.Translate(expression);
-        return new LibSqlTable<TElement>(this, expression, Table.Db);
+        return new LibSqlTable<TElement>(this, expression, _table.Db);
     }
 
     public TResult Execute<TResult>(Expression expression)
     {
-        var visitor = new LinqToSqliteVisitor(Table.JoinNavigations);
+        var visitor = new LinqToSqliteVisitor(_table.JoinNavigations);
         var query = visitor.Translate(expression);
-
-        var test = new List<T>();
-        var results = Table.Db.Client.QueryAsync<T>(query.Sql, query.Parameters, Table.JoinNavigations).Result;
-        foreach (var result in results)
+        // TODO: convert to async?
+        var clientResults = _table.Db.Client.QueryAsync<T>(query.Sql, query.Parameters, _table.JoinNavigations).Result;
+        
+        var results = new List<T>(clientResults.Count);
+        foreach (var result in clientResults)
         {
-            test.Add(result);
+            results.Add(result);
         }
         
         if (typeof(TResult).IsGenericType && typeof(TResult).GetGenericTypeDefinition() == typeof(IEnumerable<>))
         {
-            return (TResult)(object)test.AsEnumerable();
+            return (TResult)(object)results.AsEnumerable();
         }
 
-        return (TResult)(object)test.FirstOrDefault();
+        return (TResult)(object)results.FirstOrDefault()!;
     }
     
     // We don't implement generics

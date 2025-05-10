@@ -11,9 +11,7 @@ namespace Bunny.LibSql.Client
 {
     public class LibSqlClient
     {
-
-        
-        private HttpClient _client = new HttpClient();
+        private HttpClient _client = new();
 
         public LibSqlClient(string baseUrl, string accessToken)
         {
@@ -67,12 +65,12 @@ namespace Bunny.LibSql.Client
                 Type = PipelineRequestType.Execute,
             });
             
-            var serialize = JsonSerializer.Serialize(call);
+            var serialize = JsonSerializer.Serialize(call); // TODO remove this, it's onyl used for debugging
             using var response = await _client.PostAsJsonAsync("/v2/pipeline", call);
             var json = await response.Content.ReadAsStringAsync();
+            // TODO: remove this, it's only used for debuggin
             try
             {
-
                 return JsonSerializer.Deserialize<PipelineResponse>(json);
             }
             catch (Exception e)
@@ -115,6 +113,14 @@ namespace Bunny.LibSql.Client
                         {
                             Type = LibSqlValueType.Float,
                             Value = d
+                        });
+                    }
+                    else if (arg is double f)
+                    {
+                        libSqlValues.Add(new LibSqlValue()
+                        {
+                            Type = LibSqlValueType.Float,
+                            Value = f
                         });
                     }
                     else if (arg is int i)

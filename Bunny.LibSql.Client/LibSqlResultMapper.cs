@@ -5,7 +5,7 @@ using Bunny.LibSql.Client.Json.Enums;
 
 namespace Bunny.LibSql.Client;
 
-public class LibSqlResultMapper
+public static class LibSqlResultMapper
 {
     public static List<T> Map<T>(List<QueryCol> cols, List<List<LibSqlValue>> rows, List<JoinNavigation>? joins = null)
     {

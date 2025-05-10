@@ -5,7 +5,7 @@ namespace Bunny.LibSql.Client.Extensions;
 
 public static class ExpressionExtensions
 {
-    public static PropertyInfo Salama<T, TProperty>(this Expression<Func<T, TProperty>> navigationPropertyPath)
+    public static PropertyInfo GetSelectedExpressionProperty<T, TProperty>(this Expression<Func<T, TProperty>> navigationPropertyPath)
     {
         var memberExpression = navigationPropertyPath.Body as MemberExpression;
         if (memberExpression == null)
