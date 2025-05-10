@@ -3,8 +3,9 @@ using Bunny.LibSql.Client.Demo;
 using Bunny.LibSql.Client.LINQ;
 
 var dbUrl = "https://harevis-bunnynet.turso.io/";
-var accessKey = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJnaWQiOiJhYmNmODU0ZC01OTg0LTRhZjgtOGY2Mi1hYmViYzlmMDYxNDgiLCJpYXQiOjE3NDY4NTA0NTZ9.FCLeC9ReuBhSGj_jo_UOx5qBsPrE4Qt2pnOKv_zwEZm51e765gF2wuNDjYmKyVyWp8h3B6C6tc9reZyqbBcXBg";
-//var accessKey = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFZERTQSJ9.eyJwIjp7InJvIjpudWxsLCJydyI6eyJucyI6WyJyZXdyZXciXSwidGFncyI6bnVsbH0sInJvYSI6bnVsbCwicndhIjpudWxsLCJkZGwiOm51bGx9LCJpYXQiOjE3NDY3NjI0MzJ9.bDYrUYhhCphM2omQeEU4OUafUFLVzff5y_H-04hgFdsc6ZL0uXUNlVQDw0TvFQQgk8krJoG95YyZ1DKLU_bkCA";
+var accessKey = "";
+//var accessKey = "";
+
 
 var db = new TestDd(dbUrl, accessKey);
 /*try

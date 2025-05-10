@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "JJ9diIsXPEk=",
+  "dgSpecHash": "Xm1cuxGIYo8=",
   "success": true,
-  "projectFilePath": "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client.Tests/Bunny.LibSql.Client.Tests.csproj",
+  "projectFilePath": "/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client.Tests/Bunny.LibSql.Client.Tests.csproj",
   "expectedPackageFiles": [
     "/Users/dejan/.nuget/packages/coverlet.collector/6.0.2/coverlet.collector.6.0.2.nupkg.sha512",
     "/Users/dejan/.nuget/packages/microsoft.codecoverage/17.11.1/microsoft.codecoverage.17.11.1.nupkg.sha512",

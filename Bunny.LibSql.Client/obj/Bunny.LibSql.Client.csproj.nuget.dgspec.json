@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj": {}
+    "/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj": {}
   },
   "projects": {
-    "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj": {
+    "/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj",
+        "projectUniqueName": "/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj",
         "projectName": "Bunny.LibSql.Client",
-        "projectPath": "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj",
+        "projectPath": "/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj",
         "packagesPath": "/Users/dejan/.nuget/packages/",
-        "outputPath": "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client/obj/",
+        "outputPath": "/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/dejan/.nuget/NuGet/NuGet.Config"

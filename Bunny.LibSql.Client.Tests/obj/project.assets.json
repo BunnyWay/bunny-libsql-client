@@ -810,11 +810,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client.Tests/Bunny.LibSql.Client.Tests.csproj",
+      "projectUniqueName": "/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client.Tests/Bunny.LibSql.Client.Tests.csproj",
       "projectName": "Bunny.LibSql.Client.Tests",
-      "projectPath": "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client.Tests/Bunny.LibSql.Client.Tests.csproj",
+      "projectPath": "/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client.Tests/Bunny.LibSql.Client.Tests.csproj",
       "packagesPath": "/Users/dejan/.nuget/packages/",
-      "outputPath": "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client.Tests/obj/",
+      "outputPath": "/Users/dejan/RiderProjects/Bunny.LibSql.Client/Bunny.LibSql.Client.Tests/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/dejan/.nuget/NuGet/NuGet.Config"
