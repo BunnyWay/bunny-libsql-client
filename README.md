@@ -47,9 +47,12 @@ public class AppDb : LibSqlDatabase
 Your models should use standard C# classes. Use attributes to define relationships.
 
 ```csharp
+[Table("Users")]
 public class User
 {
-    public string id { get; set; }
+    [Key]
+    public int id { get; set; }
+    [Index]
     public string name { get; set; }
 
     [AutoInclude]
@@ -57,9 +60,11 @@ public class User
     public List<Order> Orders { get; set; } = new();
 }
 
+[Table("Orders")]
 public class Order
 {
-    public string id { get; set; }
+    [Key]
+    public int id { get; set; }
     public string user_id { get; set; }
     public string product_id { get; set; }
 
@@ -68,8 +73,10 @@ public class Order
     public Product Product { get; set; }
 }
 
+[Table("Products")]
 public class Product
 {
+    [Key]
     public string id { get; set; }
     public string name { get; set; }
 }
