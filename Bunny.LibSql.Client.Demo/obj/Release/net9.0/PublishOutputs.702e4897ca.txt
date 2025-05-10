@@ -1,0 +1,7 @@
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Clienta.Demo/bin/Release/net9.0/publish/LibSql.Client.Demo
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Clienta.Demo/bin/Release/net9.0/publish/LibSql.Client.Demo.dll
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Clienta.Demo/bin/Release/net9.0/publish/LibSql.Client.Demo.deps.json
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Clienta.Demo/bin/Release/net9.0/publish/LibSql.Client.Demo.runtimeconfig.json
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Clienta.Demo/bin/Release/net9.0/publish/LibSql.Client.Demo.pdb
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Clienta.Demo/bin/Release/net9.0/publish/LibSql.Client.dll
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Clienta.Demo/bin/Release/net9.0/publish/LibSql.Client.pdb

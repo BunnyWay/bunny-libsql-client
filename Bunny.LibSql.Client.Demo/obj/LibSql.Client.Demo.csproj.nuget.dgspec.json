@@ -1,0 +1,132 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client.Demo/LibSql.Client.Demo.csproj": {}
+  },
+  "projects": {
+    "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj",
+        "projectName": "Bunny.LibSql.Client",
+        "projectPath": "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj",
+        "packagesPath": "/Users/dejan/.nuget/packages/",
+        "outputPath": "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/dejan/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {},
+          "https://nuget.pkg.github.com/BunnyWay/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.101/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client.Demo/LibSql.Client.Demo.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client.Demo/LibSql.Client.Demo.csproj",
+        "projectName": "LibSql.Client.Demo",
+        "projectPath": "/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client.Demo/LibSql.Client.Demo.csproj",
+        "packagesPath": "/Users/dejan/.nuget/packages/",
+        "outputPath": "/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client.Demo/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/dejan/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {},
+          "https://nuget.pkg.github.com/BunnyWay/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj": {
+                "projectPath": "/Users/dejan/RiderProjects/LibSql.Client/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.101/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

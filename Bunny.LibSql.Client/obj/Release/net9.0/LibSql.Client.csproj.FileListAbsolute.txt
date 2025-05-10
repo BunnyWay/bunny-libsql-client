@@ -1,0 +1,11 @@
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client/bin/Release/net9.0/LibSql.Client.deps.json
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client/bin/Release/net9.0/LibSql.Client.dll
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client/bin/Release/net9.0/LibSql.Client.pdb
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client/obj/Release/net9.0/LibSql.Client.GeneratedMSBuildEditorConfig.editorconfig
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client/obj/Release/net9.0/LibSql.Client.AssemblyInfoInputs.cache
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client/obj/Release/net9.0/LibSql.Client.AssemblyInfo.cs
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client/obj/Release/net9.0/LibSql.Client.csproj.CoreCompileInputs.cache
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client/obj/Release/net9.0/LibSql.Client.dll
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client/obj/Release/net9.0/refint/LibSql.Client.dll
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client/obj/Release/net9.0/LibSql.Client.pdb
+/Users/dejan/RiderProjects/LibSql.Client/LibSql.Client/obj/Release/net9.0/ref/LibSql.Client.dll
