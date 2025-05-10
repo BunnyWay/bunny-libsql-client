@@ -16,7 +16,7 @@ await db.ApplyMigrationsAsync();
 catch (Exception ex)
 {
     
-}
+} 
 try
 {
     await db.Client.QueryAsync("DROP TABLE Product");
