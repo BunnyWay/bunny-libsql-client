@@ -139,10 +139,16 @@ var count = await db.Client.QueryScalarAsync<int>("SELECT COUNT(*) FROM Users");
 
 ## 🧩 Attributes
 
-Attribute	Purpose
-Key - Defines the primary key for the table
-ForeignKey -	Defines a foreign key relation based on a property name
-AutoInclude -	Automatically includes the related entities on query
+The Bunny.LibSQL.Client ORM system uses attributes to define and control table structure, relationships, and query behavior. Here's a summary of the available attributes and their purpose:
+
+| Attribute      | Description                                                                 |
+|----------------|-----------------------------------------------------------------------------|
+| `Table`        | Specifies a custom table name for the entity. If omitted, class name is used. |
+| `Key`          | Marks the property as the primary key of the table.                         |
+| `Index`        | Creates an index on the annotated property for faster lookups.              |
+| `ForeignKey`   | Defines a relationship to another table by specifying the foreign key property name. |
+| `AutoInclude`  | Enables eager loading of the related property automatically during queries. |
+
 
 ## 🧪 Sample Program
 ```csharp
