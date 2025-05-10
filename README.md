@@ -38,6 +38,10 @@ Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsq
 - **📦 NuGet Package**  
   Package and publish the library to [NuGet.org](https://www.nuget.org/) for easier installation and versioning.
 
+- **🧪 Unit Tests**  
+Develop a full suite of unit tests to ensure reliability, validate edge cases, and prevent regressions as the library evolves.
+
+
 ---
 
 We welcome feedback, ideas, and contributions. If you're interested in helping shape the future of this library, feel free to open an issue or pull request!
