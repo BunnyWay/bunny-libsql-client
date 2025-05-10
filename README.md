@@ -1,205 +1,160 @@
-# .NET LibSQL Client
+# 🐇 Bunny.LibSQL.Client for .NET
 
-A lightweight HTTP-based .NET client for LibSQL that provides basic ORM capabilities, raw query execution, and LINQ-style querying support.
+**An HTTP-based lightweight .NET LibSQL ORM client designed for performance and simplicity.**
 
----
-
-## Table of Contents
-
-* [Installation](#installation)
-* [Getting Started](#getting-started)
-* [Basic ORM Support](#basic-orm-support)
-
-  * [Defining Your Database](#defining-your-database)
-  * [Applying Migrations](#applying-migrations)
-  * [Inserting Data](#inserting-data)
-  * [Querying Data](#querying-data)
-  * [Defining Relationships](#defining-relationships)
-  * [Auto-Includes (Eager Loading)](#auto-includes-eager-loading)
-* [Raw Query Execution](#raw-query-execution)
-* [Demo Project Example](#demo-project-example)
-* [Contributing](#contributing)
-* [License](#license)
+Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsql.org/) that lets you define models, run queries, and use LINQ—without the bloat of heavyweight ORMs. Inspired by EF Core, reimagined for cloud-first applications.
 
 ---
 
-## Installation
+## ✨ Features
 
-Install via NuGet:
-
-```bash
-dotnet add package Bunny.LibSql.Client
-```
-
-Or via the Package Manager:
-
-```powershell
-Install-Package Bunny.LibSql.Client
-```
+- 🌐 HTTP-based access to LibSQL endpoints
+- 🧠 Lightweight ORM-like structure
+- ⚡ Async operations with `InsertAsync`, `QueryAsync`, and more
+- 🔗 LINQ query support with `Include()` and `AutoInclude` for eager loading
+- 🧱 Auto-migration via `ApplyMigrationsAsync`
+- 📦 Plug-and-play class-based DB structure
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
-1. **Create a subclass of `LibSqlDatabase`**
+### 📦 Installation
 
-   ```csharp
-   public class MyDatabase : LibSqlDatabase
-   {
-       public MyDatabase(string dbUrl, string accessKey)
-           : base(new LibSqlClient(dbUrl, accessKey))
-       {
-       }
+> Coming soon via NuGet: `Bunny.LibSQL.Client`
 
-       public LibSqlTable<Person> People { get; set; }
-       public LibSqlTable<Product> Products { get; set; }
-       public LibSqlTable<Description> Descriptions { get; set; }
-   }
-   ```
-
-2. **Instantiate and apply migrations**
-
-   ```csharp
-   var dbUrl = "https://your-libsql-endpoint/";
-   var accessKey = "your-access-key";
-
-   var db = new MyDatabase(dbUrl, accessKey);
-   await db.ApplyMigrationsAsync();
-   ```
+For now, clone this repo and include the project in your solution.
 
 ---
 
-## Basic ORM Support
+## 🏗️ Define Your Database
 
-### Defining Your Database
-
-Your `LibSqlDatabase` subclass should expose tables as properties of type `LibSqlTable<T>`, where `T` is your entity class.
-
-### Applying Migrations
-
-`ApplyMigrationsAsync` will examine your entity definitions and automatically create, update, or drop tables/columns to match:
+Start by inheriting from `LibSqlDatabase`. Use `LibSqlTable<T>` to define the tables.
 
 ```csharp
-await db.ApplyMigrationsAsync();
+public class AppDb : LibSqlDatabase
+{
+    public AppDb(string dbUrl, string accessKey)
+        : base(new LibSqlClient(dbUrl, accessKey)) {}
+
+    public LibSqlTable<User> Users { get; set; }
+    public LibSqlTable<Order> Orders { get; set; }
+    public LibSqlTable<Product> Products { get; set; }
+}
 ```
 
-### Inserting Data
-
-Call `InsertAsync` on a table:
-
-```csharp
-await db.People.InsertAsync(new Person {
-    name = "Dejan",
-    lastName = "gp"
-});
-```
-
-### Querying Data
-
-Use LINQ-style syntax. For basic queries:
+## 📐 Define Your Models
+Your models should use standard C# classes. Use attributes to define relationships.
 
 ```csharp
-var allPeople = db.People.ToList();
-```
-
-To filter:
-
-```csharp
-var editors = db.People.Where(p => p.role == "Editor").ToList();
-```
-
-### Defining Relationships
-
-Annotate navigation properties with `[ForeignKey]`:
-
-```csharp
-public class Person {
+public class User
+{
     public string id { get; set; }
     public string name { get; set; }
 
-    [ForeignKey("person_id")]
-    public List<Product> products { get; set; } = new();
+    [AutoInclude]
+    [ForeignKey("user_id")]
+    public List<Order> Orders { get; set; } = new();
+}
+
+public class Order
+{
+    public string id { get; set; }
+    public string user_id { get; set; }
+    public string product_id { get; set; }
+
+    [AutoInclude]
+    [ForeignKey("product_id")]
+    public Product Product { get; set; }
+}
+
+public class Product
+{
+    public string id { get; set; }
+    public string name { get; set; }
 }
 ```
 
-The string argument is the column name in the related table.
-
-### Auto-Includes (Eager Loading)
-
-To automatically include related entities by default, add `[AutoInclude]` to the navigation property:
+## ⚙️ Initialize & Migrate
+Initialize your database and automatically sync models with ApplyMigrationsAsync.
 
 ```csharp
-[AutoInclude]
-[ForeignKey("person_id")]
-public List<Product> products { get; set; } = new();
+var db = new AppDb(dbUrl, accessKey);
+await db.ApplyMigrationsAsync();
 ```
 
----
-
-## Raw Query Execution
-
-Sometimes you need to run SQL directly:
+## 📥 Insert Data
+Insert records using InsertAsync.
 
 ```csharp
-// Executes a command that does not return rows
-await db.Client.QueryAsync("DELETE FROM Person WHERE active = FALSE");
+await db.Users.InsertAsync(new User
+{
+    id = "1",
+    name = "Alice"
+});
 
-// Executes a command and returns a single scalar value
-int deletedCount = await db.Client.QueryScalarAsync<int>("DELETE FROM Person WHERE active = FALSE");
+await db.Products.InsertAsync(new Product
+{
+    id = "p1",
+    name = "Carrot Sneakers"
+});
 ```
 
----
+## 🔍 Query with LINQ
 
-## Demo Project Example
-
-Below is a minimal console demo that showcases migrations, inserts, and querying with includes:
-
+### Basic Query
 ```csharp
-using Bunny.LibSql.Client;
-using Bunny.LibSql.Client.LINQ;
+var users = db.Users
+    .Where(u => u.name.StartsWith("A"))
+    .ToList();
+```
 
-var dbUrl = "https://harevis-bunnynet.turso.io/";
-var accessKey = "<your-access-key>";
+### Eager Loading with Include 
+```csharp
+var usersWithOrders = db.Users
+    .Include(u => u.Orders)
+    .Include<Order>(o => o.Product)
+    .ToList();
+```
 
-var db = new TestDd(dbUrl, accessKey);
+## ⚡ Direct SQL Queries
+For raw access, you can use the underlying client directly.
+
+### 🧹 Run a command
+```csharp
+await db.Client.QueryAsync("DELETE FROM Users");
+```
+
+### 🔢 Get a scalar value
+```csharp
+var count = await db.Client.QueryScalarAsync<int>("SELECT COUNT(*) FROM Users");
+```
+
+## 🧩 Attributes
+
+Attribute	Purpose
+Key - Defines the primary key for the table
+ForeignKey -	Defines a foreign key relation based on a property name
+AutoInclude -	Automatically includes the related entities on query
+
+## 🧪 Sample Program
+```csharp
+var db = new AppDb("https://your-libsql-instance.turso.io/", "your_access_key");
 await db.ApplyMigrationsAsync();
 
-// Insert sample data
-await db.People.InsertAsync(new Person { name = "dejan", lastName = "gp" });
-await db.Products.InsertAsync(new Product { name = "cdn", person_id = "0" });
-await db.Products.InsertAsync(new Product { name = "dns",   person_id = "0" });
+await db.Users.InsertAsync(new User { id = "1", name = "Dejan" });
 
-// Query with includes
-var peopleWithProducts = db.People
-    .Include(p => p.products)
-    .Include<Product>(prod => prod.descriptions)
+var users = db.Users
+    .Include(u => u.Orders)
+    .Include<Order>(o => o.Product)
     .ToList();
 
-foreach (var person in peopleWithProducts) {
-    Console.WriteLine($"Person: {person.name}");
-    foreach (var prod in person.products) {
-        Console.WriteLine($"  Product: {prod.name}");
-        foreach (var desc in prod.descriptions) {
-            Console.WriteLine($"    Description: {desc.name}");
-        }
+foreach (var user in users)
+{
+    Console.WriteLine($"User: {user.name}");
+    foreach (var order in user.Orders)
+    {
+        Console.WriteLine($"  Ordered: {order.Product?.name}");
     }
 }
 ```
-
----
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Commit your changes: `git commit -m "Add awesome feature"`
-4. Push to the branch: `git push origin feature/new-feature`
-5. Open a pull request
-
-Please follow the existing code style and include unit tests.
-
----
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
