@@ -57,6 +57,26 @@ For now, clone this repo and include the project in your solution.
 
 ---
 
+## 📚 Table of Contents
+
+- [✨ Features](#-features)
+- [🛠️ TODO / Roadmap](#️-todo--roadmap)
+- [🚀 Getting Started](#-getting-started)
+  - [📦 Installation](#-installation)
+- [🏗️ Define Your Database](#️-define-your-database)
+- [📐 Define Your Models](#-define-your-models)
+- [⚙️ Initialize & Migrate](#️-initialize--migrate)
+- [📥 Insert Data](#-insert-data)
+- [🔍 Query with LINQ](#-query-with-linq)
+  - [Basic Query](#basic-query)
+  - [Eager Loading with Include](#eager-loading-with-include)
+- [⚡ Direct SQL Queries](#-direct-sql-queries)
+  - [🧹 Run a command](#-run-a-command)
+  - [🔢 Get a scalar value](#-get-a-scalar-value)
+- [🧩 Attributes](#-attributes)
+- [🧪 Sample Program](#-sample-program)
+
+
 ## 🏗️ Define Your Database
 
 Start by inheriting from `LibSqlDatabase`. Use `LibSqlTable<T>` to define the tables.
