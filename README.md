@@ -59,10 +59,6 @@ For now, clone this repo and include the project in your solution.
 
 ## 📚 Table of Contents
 
-- [✨ Features](#-features)
-- [🛠️ TODO / Roadmap](#️-todo--roadmap)
-- [🚀 Getting Started](#-getting-started)
-  - [📦 Installation](#-installation)
 - [🏗️ Define Your Database](#️-define-your-database)
 - [📐 Define Your Models](#-define-your-models)
 - [⚙️ Initialize & Migrate](#️-initialize--migrate)
