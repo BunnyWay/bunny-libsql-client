@@ -9,7 +9,7 @@ Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsq
 ## ✨ Features
 
 - 🌐 HTTP-based access to LibSQL endpoints
-- 🧠 Lightweight ORM-like structure
+- 🧠 Lightweight ORM
 - ⚡ Async operations with `InsertAsync`, `QueryAsync`, and more
 - 🔗 LINQ query support with `Include()` and `AutoInclude` for eager loading
 - 🧱 Auto-migration via `ApplyMigrationsAsync`
@@ -22,7 +22,6 @@ Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsq
 > **Note:** This library is currently a **Work In Progress (WIP)** prototype and not yet intended for production use. While foundational ORM and querying features are available, several important enhancements are still in progress.
 
 ### Planned Features
-
 - **🔁 Many-to-Many Relationships**  
   Implement support for many-to-many relationships via join tables and automated mapping.
 
@@ -210,7 +209,8 @@ Bunny.LibSQL.Client automatically maps common C# types to supported LibSQL colum
 | `long`      | 64-bit integer                           | Maps to `INTEGER`                    |
 | `double`    | Double-precision floating point          | Maps to `REAL`                       |
 | `float`     | Single-precision floating point          | Maps to `REAL`                       |
-| `DateTime`  | Date and time representation             | Stored as ISO-8601 string            |
+| `decimal`   | Double-precision floating point          | Maps to `REAL`                       |
+| `DateTime`  | Date and time representation             | Stored as `INTEGER` UNIX timestamp   |
 | `bool`      | Boolean value                            | Stored as `0` (false) or `1` (true)  |
 | `byte[]`    | Binary data (e.g., files, images)        | **TODO:** Planned support            |
 
