@@ -196,6 +196,23 @@ The Bunny.LibSQL.Client ORM system uses attributes to define and control table s
 | `AutoInclude`  | Enables eager loading of the related property automatically during queries. |
 
 
+## 🧮 Supported Data Types
+
+Bunny.LibSQL.Client automatically maps common C# types to supported LibSQL column types. These types are used for model properties and are inferred during table creation and querying.
+
+| C# Type     | Description                              | Notes                                |
+|-------------|------------------------------------------|--------------------------------------|
+| `string`    | Textual data                             | Maps to `TEXT`                       |
+| `int`       | 32-bit integer                           | Maps to `INTEGER`                    |
+| `long`      | 64-bit integer                           | Maps to `INTEGER`                    |
+| `double`    | Double-precision floating point          | Maps to `REAL`                       |
+| `float`     | Single-precision floating point          | Maps to `REAL`                       |
+| `DateTime`  | Date and time representation             | Stored as ISO-8601 string            |
+| `bool`      | Boolean value                            | Stored as `0` (false) or `1` (true)  |
+| `byte[]`    | Binary data (e.g., files, images)        | **TODO:** Planned support            |
+
+> ⚠️ **Note:** Nullable variants (e.g., `int?`, `bool?`, etc.) are also supported and will map to nullable columns.
+
 ## 🧪 Sample Program
 ```csharp
 var db = new AppDb("https://your-libsql-instance.turso.io/", "your_access_key");
