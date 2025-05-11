@@ -196,6 +196,7 @@ The Bunny.LibSQL.Client ORM system uses attributes to define and control table s
 | `Index`        | Creates an index on the annotated property for faster lookups.              |
 | `ForeignKey`   | Defines a relationship to another table by specifying the foreign key property name. |
 | `AutoInclude`  | Enables eager loading of the related property automatically during queries. |
+| `Unique`       | Marks the field with the UNIQUE constraint, ensuring a unique value in every row. |
 
 
 ## 🧮 Supported Data Types
