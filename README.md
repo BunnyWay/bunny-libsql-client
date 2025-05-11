@@ -23,17 +23,11 @@ Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsq
 
 ### Planned Features
 
-- **🔄 One-to-One Relationships**  
-  Add support for modeling direct one-to-one relationships between entities using foreign keys.
-
 - **🔁 Many-to-Many Relationships**  
   Implement support for many-to-many relationships via join tables and automated mapping.
 
 - **💳 Transaction Support**  
   Introduce transaction handling to allow atomic multi-step operations.
-
-- **🛡️ Error Handling**  
-  Improve robustness by introducing consistent and developer-friendly error messages, exception types, and recovery suggestions.
 
 - **📦 NuGet Package**  
   Package and publish the library to [NuGet.org](https://www.nuget.org/) for easier installation and versioning.
@@ -70,6 +64,7 @@ For now, clone this repo and include the project in your solution.
   - [🧹 Run a command](#-run-a-command)
   - [🔢 Get a scalar value](#-get-a-scalar-value)
 - [🧩 Attributes](#-attributes)
+- [🧮 Supported Data Types](#-supported-data-types)
 - [🧪 Sample Program](#-sample-program)
 
 
@@ -159,7 +154,7 @@ await db.Products.InsertAsync(new Product
 ```csharp
 var users = db.Users
     .Where(u => u.name.StartsWith("A"))
-    .ToList();
+    .ToListAsync();
 ```
 
 ### Eager Loading with Include 
@@ -167,8 +162,16 @@ var users = db.Users
 var usersWithOrders = db.Users
     .Include(u => u.Orders)
     .Include<Order>(o => o.Product)
-    .ToList();
+    .FirstOrDefaultAsync();
 ```
+
+### Aggregates: Count & Sum
+You can perform aggregate queries such as CountAsync() and SumAsync(...). 
+```csharp
+var userCount = await db.Users.CountAsync();
+var totalPrice = await db.Orders.SumAsync(o => o.price);
+```
+> ⚠️ **Important:** Always use the `Async` variants like `ToListAsync()`, `CountAsync()`, and `SumAsync(...)` to execute queries. Skipping the async call will **not** run the query.
 
 ## ⚡ Direct SQL Queries
 For raw access, you can use the underlying client directly.
@@ -196,6 +199,23 @@ The Bunny.LibSQL.Client ORM system uses attributes to define and control table s
 | `AutoInclude`  | Enables eager loading of the related property automatically during queries. |
 
 
+## 🧮 Supported Data Types
+
+Bunny.LibSQL.Client automatically maps common C# types to supported LibSQL column types. These types are used for model properties and are inferred during table creation and querying.
+
+| C# Type     | Description                              | Notes                                |
+|-------------|------------------------------------------|--------------------------------------|
+| `string`    | Textual data                             | Maps to `TEXT`                       |
+| `int`       | 32-bit integer                           | Maps to `INTEGER`                    |
+| `long`      | 64-bit integer                           | Maps to `INTEGER`                    |
+| `double`    | Double-precision floating point          | Maps to `REAL`                       |
+| `float`     | Single-precision floating point          | Maps to `REAL`                       |
+| `DateTime`  | Date and time representation             | Stored as ISO-8601 string            |
+| `bool`      | Boolean value                            | Stored as `0` (false) or `1` (true)  |
+| `byte[]`    | Binary data (e.g., files, images)        | **TODO:** Planned support            |
+
+> ⚠️ **Note:** Nullable variants (e.g., `int?`, `bool?`, etc.) are also supported and will map to nullable columns.
+
 ## 🧪 Sample Program
 ```csharp
 var db = new AppDb("https://your-libsql-instance.turso.io/", "your_access_key");
@@ -203,10 +223,10 @@ await db.ApplyMigrationsAsync();
 
 await db.Users.InsertAsync(new User { id = "1", name = "Dejan" });
 
-var users = db.Users
+var users = await db.Users
     .Include(u => u.Orders)
     .Include<Order>(o => o.Product)
-    .ToList();
+    .ToListAsync();
 
 foreach (var user in users)
 {
