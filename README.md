@@ -119,6 +119,8 @@ public class Product
     [Key]
     public string id { get; set; }
     public string name { get; set; }
+    [Unique]
+    public string product_code { get; set; }
 }
 ```
 
