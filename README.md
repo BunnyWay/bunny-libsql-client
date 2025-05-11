@@ -70,6 +70,7 @@ For now, clone this repo and include the project in your solution.
   - [🧹 Run a command](#-run-a-command)
   - [🔢 Get a scalar value](#-get-a-scalar-value)
 - [🧩 Attributes](#-attributes)
+- [🧮 Supported Data Types](#-supported-data-types)
 - [🧪 Sample Program](#-sample-program)
 
 
