@@ -23,17 +23,11 @@ Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsq
 
 ### Planned Features
 
-- **🔄 One-to-One Relationships**  
-  Add support for modeling direct one-to-one relationships between entities using foreign keys.
-
 - **🔁 Many-to-Many Relationships**  
   Implement support for many-to-many relationships via join tables and automated mapping.
 
 - **💳 Transaction Support**  
   Introduce transaction handling to allow atomic multi-step operations.
-
-- **🛡️ Error Handling**  
-  Improve robustness by introducing consistent and developer-friendly error messages, exception types, and recovery suggestions.
 
 - **📦 NuGet Package**  
   Package and publish the library to [NuGet.org](https://www.nuget.org/) for easier installation and versioning.
