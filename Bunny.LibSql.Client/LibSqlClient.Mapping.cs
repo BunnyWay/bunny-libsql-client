@@ -60,12 +60,6 @@ namespace Bunny.LibSql.Client
             var libSqlValues = new List<LibSqlValue>();
             foreach (var arg in args)
             {
-                // TODO: what's that?
-                if (!arg.GetType().IsLibSqlSupportedType())
-                {
-                    continue;
-                }
-                
                 if (arg is LibSqlValue libSqlValue)
                 {
                     libSqlValues.Add(libSqlValue);

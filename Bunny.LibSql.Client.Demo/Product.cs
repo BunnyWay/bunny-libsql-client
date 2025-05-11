@@ -12,6 +12,7 @@ public class Product
     public int id { get; set; }
     [NotNull]
     [AllowNull]
+    [Index]
     public string name { get; set; }
     public string person_id { get; set; }
     

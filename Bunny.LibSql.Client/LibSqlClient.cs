@@ -17,7 +17,6 @@ namespace Bunny.LibSql.Client
     // TODO: add support for turso /health
     // TODO: add support for turso /version
     // TODO: add support for turso /beta/listen
-    // TODO: add BLOB support
     public partial class LibSqlClient
     {
         private HttpClient _client = new();

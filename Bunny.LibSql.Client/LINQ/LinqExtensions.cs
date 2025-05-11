@@ -72,7 +72,7 @@ public static class LinqExtensions
             return test;
         }
         
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
     
     /// <summary>
@@ -97,6 +97,6 @@ public static class LinqExtensions
             return await asyncProvider.ExecuteAsync<TResult>(callExpr, cancellationToken);
         }
 
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }

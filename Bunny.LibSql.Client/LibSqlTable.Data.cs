@@ -4,7 +4,6 @@ using Bunny.LibSql.Client.SQL;
 
 namespace Bunny.LibSql.Client;
 
-// TODO: add drop table / truncate table
 // TODO: add helper methods for multi-update, multi-delete and multi-insert
 public partial class LibSqlTable<T>
 {
@@ -31,15 +30,16 @@ public partial class LibSqlTable<T>
     }
     
     // TODO: update this and add a test
-    private void AssignLastInsertRowId(T item, PipelineResponse? pipelineResponse)
+    private void AssignLastInsertRowId(T item, PipelineResponse? pipelineResponse, int itemIndex = 0)
     {
-        var newKey = pipelineResponse?.Results?.FirstOrDefault()?.Response?.Result?.LastInsertRowId;
+        // Item index uses a different last_insert_rowid for each item
+        var newKey = pipelineResponse?.Results?.Skip(itemIndex).FirstOrDefault()?.Response?.Result?.LastInsertRowId;
         if (newKey == null)
         {
             throw new InvalidOperationException("Failed to retrieve the last insert row ID.");
         }
         
-        // TODO: bool, short etc
+        // TODO: bool, short etc (document / verify the supported properties)
         var keyProperty = GetPrimaryKeyProperty();
         if (keyProperty.PropertyType == typeof(int))
         {

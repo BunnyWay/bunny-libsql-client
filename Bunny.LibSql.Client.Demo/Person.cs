@@ -12,6 +12,7 @@ public class Person
     public string name { get; set; }
     public string lastName { get; set; }
     public double age { get; set; }
+    public string code { get; set; }
     public DateTime date_joined { get; set; }
     
     public int? age2 { get; set; }

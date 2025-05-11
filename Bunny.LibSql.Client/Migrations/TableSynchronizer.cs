@@ -14,6 +14,7 @@ public static class TableSynchronizer
     /// Generates all needed DDL to bring the type into sync:
     /// - create/drop columns
     /// - create/drop indexes for [Index] and [Join]
+    /// - apply UNIQUE constraints for [Index(Unique = true)] attributes
     /// </summary>
     public static List<string> GenerateSqlCommands(Type type,
         IEnumerable<SqliteTableInfo> existingColumns,
@@ -32,11 +33,11 @@ public static class TableSynchronizer
         var existingColsByName = (existingColumns ?? Enumerable.Empty<SqliteTableInfo>())
             .ToDictionary(c => c.name, c => c, StringComparer.OrdinalIgnoreCase);
 
-        // 0. Detect any type changes
+        // 0. Detect any type or nullability/uniqueness changes
         var changedProps = props
             .Where(p => existingColsByName.TryGetValue(p.Name, out var colInfo)
                         && !string.Equals(
-                            SqliteToNativeTypeMap.ToSqlType(p.PropertyType) + GetNullabilityDefinition(p),
+                            BuildColumnDefinition(p),
                             colInfo.type,
                             StringComparison.OrdinalIgnoreCase))
             .ToArray();
@@ -45,7 +46,7 @@ public static class TableSynchronizer
         {
             // We need to rebuild the table
             var newColumnsDef = props
-                .Select(p => $"{p.Name} {SqliteToNativeTypeMap.ToSqlType(p.PropertyType)}{GetNullabilityDefinition(p)}")
+                .Select(p => BuildColumnDefinition(p))
                 .ToList();
 
             var columnList = string.Join(", ", props.Select(p => p.Name));
@@ -54,7 +55,7 @@ public static class TableSynchronizer
             sql.Add("PRAGMA foreign_keys=OFF;");
             sql.Add("BEGIN TRANSACTION;");
 
-            // 1) Create new shadow table
+            // 1) Create new shadow table with UNIQUE constraints
             sql.Add($"CREATE TABLE {tableName}_new ({columnListWithType});");
 
             // 2) Copy data across (SQLite will convert types where it can)
@@ -69,20 +70,16 @@ public static class TableSynchronizer
 
             sql.Add("COMMIT;");
             sql.Add("PRAGMA foreign_keys=ON;");
-
-            // rebuild indexes as well if needed, so let the index logic run below
         }
         else
         {
-            // — Columns sync: only create/add/drop if no type changes —
-
+            // — Columns sync: only create/add/drop if no rebuild needed —
             var existingNames = existingColsByName.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             // 1. CREATE TABLE if empty
             if (existingNames.Count == 0)
             {
-                var cols = props
-                    .Select(p => $"{p.Name} {SqliteToNativeTypeMap.ToSqlType(p.PropertyType)}{GetNullabilityDefinition(p)}");
+                var cols = props.Select(p => BuildColumnDefinition(p));
                 sql.Add($"CREATE TABLE IF NOT EXISTS {tableName} ({string.Join(", ", cols)});");
             }
             else
@@ -92,8 +89,7 @@ public static class TableSynchronizer
                 {
                     if (!existingNames.Contains(p.Name))
                     {
-                        var typeSql = SqliteToNativeTypeMap.ToSqlType(p.PropertyType);
-                        sql.Add($"ALTER TABLE {tableName} ADD COLUMN {p.Name} {typeSql}{GetNullabilityDefinition(p)};");
+                        sql.Add($"ALTER TABLE {tableName} ADD COLUMN {BuildColumnDefinition(p)};");
                     }
                 }
 
@@ -107,30 +103,28 @@ public static class TableSynchronizer
             }
         }
 
-        // — Indexes sync (unchanged) —
+        // — Indexes sync: only non-unique indexes, unique enforced via constraint in table —
         var existingIdx = (existingIndexes ?? Enumerable.Empty<SqliteMasterInfo>())
-            .Where(i =>
-                i.type.Equals("index", StringComparison.OrdinalIgnoreCase) &&
-                i.tbl_name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
+            .Where(i => i.type.Equals("index", StringComparison.OrdinalIgnoreCase)
+                        && i.tbl_name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
             .Select(i => i.name)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var desired = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        // [Index] attributes
+        // [Index] attributes: skip Unique ones
         foreach (var p in props)
         {
             var att = p.GetCustomAttribute<IndexAttribute>();
-            if (att != null)
+            if (att != null && !att.Unique)
             {
                 var idxName = att.Name ?? $"idx_{tableName}_{p.Name}";
-                var unique = att.Unique ? "UNIQUE " : "";
-                var ddl = $"CREATE {unique}INDEX IF NOT EXISTS {idxName} ON {tableName}({p.Name});";
+                var ddl = $"CREATE INDEX IF NOT EXISTS {idxName} ON {tableName}({p.Name});";
                 desired[idxName] = ddl;
             }
         }
 
-        // [Join] attributes
+        // [Join] attributes remain unchanged
         foreach (var p in props)
         {
             var att = p.GetCustomAttribute<JoinAttribute>();
@@ -159,24 +153,28 @@ public static class TableSynchronizer
         return sql;
     }
 
-    /// <summary>
-    /// Determines the nullability clause for a property based on its type and nullable attributes.
-    /// </summary>
+    private static string BuildColumnDefinition(PropertyInfo p)
+    {
+        var typeSql = SqliteToNativeTypeMap.ToSqlType(p.PropertyType);
+        var nullDef = GetNullabilityDefinition(p);
+        var uniqueDef = GetUniqueDefinition(p);
+        return $"{p.Name} {typeSql}{nullDef}{uniqueDef}";
+    }
+
     private static string GetNullabilityDefinition(PropertyInfo p)
     {
-        // Override with explicit attributes
         if (p.GetCustomAttribute<NotNullAttribute>() != null)
             return " NOT NULL";
         if (p.GetCustomAttribute<AllowNullAttribute>() != null)
             return string.Empty;
-
-        // Value types: non-nullable by default unless it's Nullable<T>
         if (p.PropertyType.IsValueType)
-        {
             return p.PropertyType.IsNullableType() ? string.Empty : " NOT NULL";
-        }
-
-        // Reference types: nullable by default
         return string.Empty;
+    }
+
+    private static string GetUniqueDefinition(PropertyInfo p)
+    {
+        var att = p.GetCustomAttribute<IndexAttribute>();
+        return att != null && att.Unique ? " UNIQUE" : string.Empty;
     }
 }

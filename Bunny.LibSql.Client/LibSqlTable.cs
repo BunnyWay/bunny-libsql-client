@@ -60,11 +60,10 @@ public partial class LibSqlTable<T> : IQueryable<T>
         LoadAllAutoIncludes();
         return Provider.Execute<IEnumerable>(Expression).GetEnumerator();
     }
-    
-    
-    public void CountAsync()
+
+    public async Task TruncateTable()
     {
-        
+        await Db.Client.QueryAsync($"DELETE FROM {TableName}");
     }
     
     #region Helpers

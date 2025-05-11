@@ -57,6 +57,6 @@ public class LibSqlQueryProvider<T> : IAsyncQueryProvider
     }
 
     // We don't implement generics
-    public IQueryable CreateQuery(Expression expression) => throw new NotImplementedException();
-    public object? Execute(Expression expression) => throw new NotImplementedException();
+    public IQueryable CreateQuery(Expression expression) => throw new NotSupportedException();
+    public object? Execute(Expression expression) => throw new NotSupportedException();
 }

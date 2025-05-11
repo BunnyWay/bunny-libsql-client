@@ -25,7 +25,7 @@ namespace Bunny.LibSql.Client
                 receiveJson = await response.Content.ReadAsStringAsync();
                 
                 var pipelineResponse = JsonSerializer.Deserialize<PipelineResponse>(receiveJson);
-                CheckResponseForErrors("", pipelineResponse); // TODO, we can map the specific query error
+                CheckResponseForErrors(queries.Select(e => e.sql).ToArray(), pipelineResponse);
                 return pipelineResponse;
             }
             catch (Exception e)
@@ -67,24 +67,37 @@ namespace Bunny.LibSql.Client
             return mapped;
         }
 
-        private void CheckResponseForErrors(string sqlQuery, PipelineResponse? response)
+        public async Task<T?> QueryOneAsync<T>(string query, IEnumerable<object>? args = null,
+            List<JoinNavigation>? joins = null, CancellationToken cancellationToken = default)
+        {
+            var results = await QueryAsync<T>(query, args, joins, cancellationToken);
+            return results.FirstOrDefault();
+        }
+
+        private void CheckResponseForErrors(string sqlQuery, PipelineResponse? response) =>
+            CheckResponseForErrors([sqlQuery], response);
+
+        private void CheckResponseForErrors(string[] sqlQueries, PipelineResponse? response)
         {
             if(response == null || response.Results == null)
             {
-                throw new LibSqlException(sqlQuery, "An unknown error has occured while executing the query");
+                throw new LibSqlException("", "An unknown error has occured while executing the query");
             }
-            
+
+            int queryIndex = 0;
             foreach (var result in response.Results)
             {
                 if (result.Type == PipelineResultType.Error)
                 {
                     if (result.Error == null)
                     {
-                        throw new LibSqlException(sqlQuery, "An unknown error has occured while executing the query");
+                        throw new LibSqlException(sqlQueries[queryIndex], "An unknown error has occured while executing the query");
                     }
                     
-                    throw new LibSqlException(sqlQuery, result.Error.Message);
+                    throw new LibSqlException(sqlQueries[queryIndex], result.Error.Message);
                 }
+
+                queryIndex++;
             }
         }
         
@@ -177,7 +190,5 @@ namespace Bunny.LibSql.Client
         }
         public async Task<long> ExecuteScalarAsync(string query, IEnumerable<object>? args = null,
             CancellationToken cancellationToken = default) => await ExecuteScalarAsync<long>(query, args, cancellationToken);
-
-        // TODO: query one
     }
 }
