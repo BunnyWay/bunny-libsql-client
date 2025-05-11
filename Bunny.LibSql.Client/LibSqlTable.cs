@@ -6,10 +6,10 @@ using Bunny.LibSql.Client.LINQ;
 namespace Bunny.LibSql.Client;
 
 // TODO: explore whether we can add a "query tracker" to LINQ to get metrics for the exact queries etc.
-// TODO: add one-to-one and one-to-many support
+// TODO: add one-to-many support
+// TODO: add unique attribute support
 // TODO: add data validation support
 // TODO: add change tracking?
-// TODO: check if joined data relations are truncated -> can we add explicit relations?
 public partial class LibSqlTable<T> : IQueryable<T>
 {
     public readonly string TableName;

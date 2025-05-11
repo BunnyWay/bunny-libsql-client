@@ -5,6 +5,7 @@ using Bunny.LibSql.Client.HttpClientModels;
 using Bunny.LibSql.Client.Json;
 using Bunny.LibSql.Client.Json.Enums;
 using Bunny.LibSql.Client.LINQ;
+using Bunny.LibSql.Client.TypeHandling;
 
 namespace Bunny.LibSql.Client;
 
@@ -114,7 +115,7 @@ public static class LibSqlResultMapper
 
             if (mappableProperties.TryGetValue(col.Name, out var pi))
             {
-                AssignValue(pi, item, row);
+                LibSqlToNativeValueMapper.AssignLibSqlValueToNativeProperty(col.DeclType, pi, item, row);
             }
             
             currentColsProcessed++;
@@ -131,37 +132,5 @@ public static class LibSqlResultMapper
         }
         
         return item;
-    }
-    
-    // TODO: move this to TypeHandling?
-    private static void AssignValue(PropertyInfo pi, object obj, LibSqlValue libSqlValue)
-    {
-        switch (libSqlValue.Type)
-        {
-            case LibSqlValueType.Float:
-                pi.SetValue(obj, libSqlValue.Value as double?);
-                return;
-            case LibSqlValueType.Text:
-                pi.SetValue(obj, libSqlValue.Value.ToString());
-                return;
-            case LibSqlValueType.Integer:
-                var intVal = libSqlValue.Value as int?;
-                var intValParsed = intVal ?? 0;
-                if (intVal == null && (libSqlValue?.Value == null || !int.TryParse(libSqlValue.Value?.ToString(), CultureInfo.InvariantCulture, out intValParsed)))
-                {
-                    return;
-                }
-
-                if (pi.PropertyType == typeof(bool))
-                {
-                    pi.SetValue(obj, intValParsed == 1);
-                }
-                else
-                {
-                    pi.SetValue(obj, intValParsed);
-                }
-                    
-                return;
-        }
     }
 }

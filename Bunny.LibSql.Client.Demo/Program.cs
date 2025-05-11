@@ -7,7 +7,6 @@ var accessKey = "";
 //var accessKey = "";
 
 var db = new TestDd(dbUrl, accessKey);
-await db.ApplyMigrationsAsync();
 
 /*try
 {

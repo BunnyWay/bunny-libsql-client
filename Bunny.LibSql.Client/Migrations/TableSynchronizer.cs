@@ -1,8 +1,10 @@
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Bunny.LibSql.Client.Attributes;
 using Bunny.LibSql.Client.Migrations.InternalModels;
 using Bunny.LibSql.Client.SQL;
+using Bunny.LibSql.Client.TypeHandling;
 
 namespace Bunny.LibSql.Client.Migrations;
 
@@ -34,7 +36,7 @@ public static class TableSynchronizer
         var changedProps = props
             .Where(p => existingColsByName.TryGetValue(p.Name, out var colInfo)
                         && !string.Equals(
-                            SqliteTypeMap.ToSqlType(p.PropertyType),
+                            SqliteToNativeTypeMap.ToSqlType(p.PropertyType) + GetNullabilityDefinition(p),
                             colInfo.type,
                             StringComparison.OrdinalIgnoreCase))
             .ToArray();
@@ -43,7 +45,7 @@ public static class TableSynchronizer
         {
             // We need to rebuild the table
             var newColumnsDef = props
-                .Select(p => $"{p.Name} {SqliteTypeMap.ToSqlType(p.PropertyType)}")
+                .Select(p => $"{p.Name} {SqliteToNativeTypeMap.ToSqlType(p.PropertyType)}{GetNullabilityDefinition(p)}")
                 .ToList();
 
             var columnList = string.Join(", ", props.Select(p => p.Name));
@@ -80,7 +82,7 @@ public static class TableSynchronizer
             if (existingNames.Count == 0)
             {
                 var cols = props
-                    .Select(p => $"{p.Name} {SqliteTypeMap.ToSqlType(p.PropertyType)}");
+                    .Select(p => $"{p.Name} {SqliteToNativeTypeMap.ToSqlType(p.PropertyType)}{GetNullabilityDefinition(p)}");
                 sql.Add($"CREATE TABLE IF NOT EXISTS {tableName} ({string.Join(", ", cols)});");
             }
             else
@@ -90,8 +92,8 @@ public static class TableSynchronizer
                 {
                     if (!existingNames.Contains(p.Name))
                     {
-                        var typeSql = SqliteTypeMap.ToSqlType(p.PropertyType);
-                        sql.Add($"ALTER TABLE {tableName} ADD COLUMN {p.Name} {typeSql};");
+                        var typeSql = SqliteToNativeTypeMap.ToSqlType(p.PropertyType);
+                        sql.Add($"ALTER TABLE {tableName} ADD COLUMN {p.Name} {typeSql}{GetNullabilityDefinition(p)};");
                     }
                 }
 
@@ -146,18 +148,35 @@ public static class TableSynchronizer
 
         // Add missing indexes
         foreach (var kv in desired)
-        {
             if (!existingIdx.Contains(kv.Key))
                 sql.Add(kv.Value);
-        }
 
         // Drop stale indexes
         foreach (var idx in existingIdx)
-        {
             if (!desired.ContainsKey(idx))
                 sql.Add($"DROP INDEX IF EXISTS {idx};");
-        }
 
         return sql;
+    }
+
+    /// <summary>
+    /// Determines the nullability clause for a property based on its type and nullable attributes.
+    /// </summary>
+    private static string GetNullabilityDefinition(PropertyInfo p)
+    {
+        // Override with explicit attributes
+        if (p.GetCustomAttribute<NotNullAttribute>() != null)
+            return " NOT NULL";
+        if (p.GetCustomAttribute<AllowNullAttribute>() != null)
+            return string.Empty;
+
+        // Value types: non-nullable by default unless it's Nullable<T>
+        if (p.PropertyType.IsValueType)
+        {
+            return p.PropertyType.IsNullableType() ? string.Empty : " NOT NULL";
+        }
+
+        // Reference types: nullable by default
+        return string.Empty;
     }
 }
