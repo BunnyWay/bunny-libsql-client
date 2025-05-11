@@ -1,6 +1,6 @@
 namespace Bunny.LibSql.Client.Migrations.InternalModels;
 
-public class TableInfo
+public class SqliteTableInfo
 {
     
     public int cid { get; set; }

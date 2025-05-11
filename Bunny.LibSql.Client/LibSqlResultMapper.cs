@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Globalization;
 using System.Reflection;
 using Bunny.LibSql.Client.HttpClientModels;
 using Bunny.LibSql.Client.Json;
@@ -80,9 +81,15 @@ public static class LibSqlResultMapper
         var parentyId = $"{join.LeftDataType.FullName}_{primaryKeyValue}";
         if (joinMapper.TryGetValue(parentyId, out var parentItem))
         {
-            // TODO check if the property is a list, otherwise assign the property
-            var list = (IList)join.LeftProperty.GetValue(parentItem);
-            list.Add(mappedItem);
+            if (join.LeftPropertyIsList)
+            {
+                var list = (IList)join.LeftProperty.GetValue(parentItem);
+                list.Add(mappedItem);
+            }
+            else
+            {
+                join.LeftProperty.SetValue(parentItem, mappedItem);
+            }
         }
     }
     
@@ -126,6 +133,7 @@ public static class LibSqlResultMapper
         return item;
     }
     
+    // TODO: move this to TypeHandling?
     private static void AssignValue(PropertyInfo pi, object obj, LibSqlValue libSqlValue)
     {
         switch (libSqlValue.Type)
@@ -139,7 +147,7 @@ public static class LibSqlResultMapper
             case LibSqlValueType.Integer:
                 var intVal = libSqlValue.Value as int?;
                 var intValParsed = intVal ?? 0;
-                if (intVal == null && (libSqlValue?.Value == null || !int.TryParse(libSqlValue.Value?.ToString(), out intValParsed)))
+                if (intVal == null && (libSqlValue?.Value == null || !int.TryParse(libSqlValue.Value?.ToString(), CultureInfo.InvariantCulture, out intValParsed)))
                 {
                     return;
                 }

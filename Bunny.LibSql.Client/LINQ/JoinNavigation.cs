@@ -12,4 +12,6 @@ public class JoinNavigation(
     public PropertyInfo LeftProperty { get; } = leftProperty;
     public Type RightDataType { get; } = rightDataType;
     public PropertyInfo RightProperty { get; } = rightProperty;
+
+    public bool LeftPropertyIsList { get; private set; } = leftProperty.PropertyType.GetGenericArguments().Any();
 }

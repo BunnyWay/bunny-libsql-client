@@ -1,6 +1,6 @@
 namespace Bunny.LibSql.Client.Migrations.InternalModels;
 
-public class SqlMasterInfo
+public class SqliteMasterInfo
 {
     public string type { get; set; }
     public string name { get; set; }

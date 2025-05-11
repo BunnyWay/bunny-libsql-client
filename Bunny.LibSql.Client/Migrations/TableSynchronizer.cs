@@ -14,8 +14,8 @@ public static class TableSynchronizer
     /// - create/drop indexes for [Index] and [Join]
     /// </summary>
     public static List<string> GenerateSqlCommands(Type type,
-        IEnumerable<TableInfo> existingColumns,
-        IEnumerable<SqlMasterInfo> existingIndexes
+        IEnumerable<SqliteTableInfo> existingColumns,
+        IEnumerable<SqliteMasterInfo> existingIndexes
     )
     {
         var tableName = type.Name;
@@ -27,7 +27,7 @@ public static class TableSynchronizer
         var sql = new List<string>();
 
         // map existing columns by name (ignore case)
-        var existingColsByName = (existingColumns ?? Enumerable.Empty<TableInfo>())
+        var existingColsByName = (existingColumns ?? Enumerable.Empty<SqliteTableInfo>())
             .ToDictionary(c => c.name, c => c, StringComparer.OrdinalIgnoreCase);
 
         // 0. Detect any type changes
@@ -106,7 +106,7 @@ public static class TableSynchronizer
         }
 
         // — Indexes sync (unchanged) —
-        var existingIdx = (existingIndexes ?? Enumerable.Empty<SqlMasterInfo>())
+        var existingIdx = (existingIndexes ?? Enumerable.Empty<SqliteMasterInfo>())
             .Where(i =>
                 i.type.Equals("index", StringComparison.OrdinalIgnoreCase) &&
                 i.tbl_name.Equals(tableName, StringComparison.OrdinalIgnoreCase))

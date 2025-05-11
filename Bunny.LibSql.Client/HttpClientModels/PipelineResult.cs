@@ -11,4 +11,7 @@ public class PipelineResult
     
     [JsonPropertyName("response")]
     public QueryResponse? Response { get; set; }
+    
+    [JsonPropertyName("error")]
+    public PipelineResultError? Error { get; set; }
 }

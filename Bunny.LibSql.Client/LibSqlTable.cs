@@ -1,9 +1,7 @@
 using System.Collections;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq.Expressions;
 using System.Reflection;
 using Bunny.LibSql.Client.LINQ;
-using Bunny.LibSql.Client.Extensions;
 
 namespace Bunny.LibSql.Client;
 
@@ -11,7 +9,7 @@ namespace Bunny.LibSql.Client;
 // TODO: add one-to-one and one-to-many support
 // TODO: add data validation support
 // TODO: add change tracking?
-
+// TODO: check if joined data relations are truncated -> can we add explicit relations?
 public partial class LibSqlTable<T> : IQueryable<T>
 {
     public readonly string TableName;
@@ -61,6 +59,12 @@ public partial class LibSqlTable<T> : IQueryable<T>
     {
         LoadAllAutoIncludes();
         return Provider.Execute<IEnumerable>(Expression).GetEnumerator();
+    }
+    
+    
+    public void CountAsync()
+    {
+        
     }
     
     #region Helpers

@@ -1,7 +1,4 @@
-using System.Text;
-using Bunny.LibSql.Client.SQL;
-
-namespace Bunny.LibSql.Client.LINQ;
+namespace Bunny.LibSql.Client.SQL;
 
 public class SqlQueryBuilder
 {
@@ -31,8 +28,9 @@ public class SqlQueryBuilder
         return new SqlQuery(query, parameters.ToArray());
     }
 
+    // TODO: check if this works for floats
     public static SqlQuery BuildDeleteQuery(string tableName, string primaryKey, object primaryKeyValue)
     {
-        return new SqlQuery($"DELETE FROM {tableName} WHERE {primaryKey} = ?", new []{ primaryKeyValue });
+        return new SqlQuery($"DELETE FROM {tableName} WHERE {primaryKey} = ?", [primaryKeyValue]);
     }
 }

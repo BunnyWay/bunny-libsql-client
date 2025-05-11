@@ -2,7 +2,7 @@
 using Bunny.LibSql.Client.Demo;
 using Bunny.LibSql.Client.LINQ;
 
-var dbUrl = "https://harevis-bunnynet.turso.io/";
+var dbUrl = "";
 var accessKey = "";
 //var accessKey = "";
 
@@ -48,23 +48,22 @@ await db.Products.InsertAsync(new Product()
 });*/
 
 
-var wot = db.People.ToList();
+//var wot = await db.People.Where(e => e.name.StartsWith("a")).SumAsync(e => e.age);
 
-
-/*wot = db.People
+var wot = db.People
     .Include(e => e.products)
     .Include<Product>(b => b.descriptions)
-    .ToList();*/
+    .ToList();
 
 foreach (var person in wot)
 {
     Console.WriteLine($"Person data {person.name}");
     foreach (var prod in person.products)
     {
-        Console.WriteLine($"Products for {person.name}: {prod.name}");
-        foreach (var description in prod.descriptions)
+        Console.WriteLine($"Products for {person.name}: {prod.name} description: {prod.descriptions.name}");
+        /*foreach (var description in prod.descriptions)
         {
             Console.WriteLine($"Product description: {description.name}");
-        }
+        }*/
     }
 }

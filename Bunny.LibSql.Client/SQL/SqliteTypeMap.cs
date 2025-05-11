@@ -2,6 +2,7 @@ namespace Bunny.LibSql.Client.SQL;
 
 public static class SqliteTypeMap
 {
+    // TODO: move to TypeHandling?
     public static string ToSqlType(Type t)
     {
         // TODO add more supported types

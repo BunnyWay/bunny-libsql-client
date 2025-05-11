@@ -15,6 +15,9 @@ public class LinqToSqliteVisitor : ExpressionVisitor
     private List<string> _orderByClauses;
     private Dictionary<string, string> _columnAliases; // For handling Select projections
     private List<JoinNavigation> _joinNavigations;
+    private bool _isCount;
+    private bool _isSum;
+    private string? _sumColumn;
     
     public LinqToSqliteVisitor(List<JoinNavigation> joinNavigations)
     {
@@ -23,91 +26,106 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         _orderByClauses = new List<string>();
         _columnAliases = new Dictionary<string, string>();
         _joinNavigations = joinNavigations;
+        _isCount = false; // reset count flag
+        _isSum = false;
     }
 
-    public (string Sql, IEnumerable<object> Parameters) Translate(Expression expression)
-    {
-        _sqlBuilder.Clear();
-        _parameters.Clear();
-        _orderByClauses.Clear();
-        _columnAliases.Clear();
-        _skip = 0;
-        _take = -1;
-
-        Visit(expression);
-
-        // Build SELECT clause
-        var finalSql = new StringBuilder();
-        finalSql.Append("SELECT ");
-
-        if (_columnAliases.Any())
+     public (string Sql, IEnumerable<object> Parameters) Translate(Expression expression)
         {
-            finalSql.Append(string.Join(", ", _columnAliases.Select(kvp => $"{kvp.Key} AS {kvp.Value}")));
-        }
-        else
-        {
-            var tableName = GetTableName(expression);
-            if (tableName == null)
+            _sqlBuilder.Clear();
+            _parameters.Clear();
+            _orderByClauses.Clear();
+            _columnAliases.Clear();
+            _skip = 0;
+            _take = -1;
+            _isCount = false; // reset count flag
+
+            Visit(expression);
+
+            // Build SELECT clause
+            var finalSql = new StringBuilder();
+            finalSql.Append("SELECT ");
+
+            if (_isCount)
             {
-                throw new InvalidOperationException("Unable to determine table name for SELECT clause.");
+                // For Count queries, use COUNT(*)
+                finalSql.Append("COUNT(*)");
             }
-            
-            if (!string.IsNullOrEmpty(tableName))
-                finalSql.Append($"{tableName}.*");
+            else if (_isSum)
+            {
+                if (string.IsNullOrEmpty(_sumColumn))
+                    throw new InvalidOperationException("Unable to determine column for SUM.");
+                finalSql.Append($"SUM({_sumColumn})");
+            }
+            else if (_columnAliases.Any())
+            {
+                finalSql.Append(string.Join(", ", _columnAliases.Select(kvp => $"{kvp.Key} AS {kvp.Value}")));
+            }
             else
-                finalSql.Append("*");
-            
+            {
+                var tableName = GetTableName(expression);
+                if (tableName == null)
+                {
+                    throw new InvalidOperationException("Unable to determine table name for SELECT clause.");
+                }
+                
+                if (!string.IsNullOrEmpty(tableName))
+                    finalSql.Append($"{tableName}.*");
+                else
+                    finalSql.Append("*");
+                
+                foreach (var join in _joinNavigations)
+                {
+                    finalSql.Append($", {join.RightDataType.GetLibSqlTableName()}.*");
+                }
+            }
+
+            // FROM clause with LEFT JOINs
+            var mainTable = GetTableName(expression);
+            finalSql.Append(" FROM ");
+            finalSql.Append(mainTable);
+
             foreach (var join in _joinNavigations)
             {
-                finalSql.Append($", {join.RightDataType.GetLibSqlTableName()}.*");
+                finalSql.Append(" LEFT JOIN ");
+                finalSql.Append(join.RightDataType.GetLibSqlTableName());
+                finalSql.Append(" ON ");
+                finalSql.Append($"{join.LeftDataType.GetLibSqlTableName()}.{join.LeftDataType.GetLibSqlPrimaryKeyProperty().Name} = {join.RightDataType.GetLibSqlTableName()}.{join.RightProperty.Name}");
             }
-        }
 
-        // FROM clause with LEFT JOINs
-        var mainTable = GetTableName(expression);
-        finalSql.Append(" FROM ");
-        finalSql.Append(mainTable);
+            // WHERE clause
+            if (_sqlBuilder.Length > 0)
+            {
+                finalSql.Append(" WHERE ");
+                finalSql.Append(_sqlBuilder.ToString());
+            }
 
-        // Append LEFT JOIN clauses for each navigation
-        foreach (var join in _joinNavigations)
-        {
-            // Assumes join.MemberName matches table name and primary key is 'Id'
-            finalSql.Append(" LEFT JOIN ");
-            finalSql.Append(join.RightDataType.GetLibSqlTableName());
-            finalSql.Append(" ON ");
-            finalSql.Append($"{join.LeftDataType.GetLibSqlTableName()}.{join.LeftDataType.GetLibSqlPrimaryKeyProperty().Name} = {join.RightDataType.GetLibSqlTableName()}.{join.RightProperty.Name}");
-        }
+            // ORDER BY (ignored for Count)
+            if (!_isCount && _orderByClauses.Any())
+            {
+                finalSql.Append(" ORDER BY ");
+                finalSql.Append(string.Join(", ", _orderByClauses));
+            }
 
-        // WHERE clause
-        if (_sqlBuilder.Length > 0)
-        {
-            finalSql.Append(" WHERE ");
-            finalSql.Append(_sqlBuilder.ToString());
-        }
+            // LIMIT & OFFSET (ignored for Count)
+            if (!_isCount)
+            {
+                if (_take > -1)
+                {
+                    finalSql.Append(" LIMIT ");
+                    finalSql.Append(_take);
+                }
+                if (_skip > 0)
+                {
+                    if (_take == -1)
+                        finalSql.Append(" LIMIT -1");
+                    finalSql.Append(" OFFSET ");
+                    finalSql.Append(_skip);
+                }
+            }
 
-        // ORDER BY
-        if (_orderByClauses.Any())
-        {
-            finalSql.Append(" ORDER BY ");
-            finalSql.Append(string.Join(", ", _orderByClauses));
+            return (finalSql.ToString().TrimEnd() + ";", _parameters);
         }
-
-        // LIMIT & OFFSET
-        if (_take > -1)
-        {
-            finalSql.Append(" LIMIT ");
-            finalSql.Append(_take);
-        }
-        if (_skip > 0)
-        {
-            if (_take == -1)
-                finalSql.Append(" LIMIT -1");
-            finalSql.Append(" OFFSET ");
-            finalSql.Append(_skip);
-        }
-
-        return (finalSql.ToString().TrimEnd() + ";", _parameters);
-    }
 
     private string? GetTableName(Expression expression)
     {
@@ -133,7 +151,45 @@ public class LinqToSqliteVisitor : ExpressionVisitor
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
         // Handle Where
-        if (node.Method.Name == "Where" && node.Method.DeclaringType == typeof(Queryable))
+        if (node.Method.Name == "Count" && node.Method.DeclaringType == typeof(Queryable))
+        {
+            // Visit the source to build any WHERE clauses
+            Visit(node.Arguments[0]);
+            // Handle predicate overload: Count(source, predicate)
+            if (node.Arguments.Count == 2)
+            {
+                if (_sqlBuilder.Length > 0)
+                    _sqlBuilder.Append(" AND ");
+
+                var lambda = (LambdaExpression)StripQuotes(node.Arguments[1]);
+                Visit(lambda.Body);
+            }
+            _isCount = true;
+            return node;
+        }
+        else if (node.Method.Name == "Sum" && node.Method.DeclaringType == typeof(Queryable))
+        {
+            Visit(node.Arguments[0]);
+            if (node.Arguments.Count == 2)
+            {
+                var lambda = (LambdaExpression)StripQuotes(node.Arguments[1]);
+                if (lambda.Body is MemberExpression memExp)
+                {
+                    _sumColumn = GetColumnName(memExp);
+                }
+                else
+                {
+                    throw new NotSupportedException($"Unsupported Sum selector: {lambda.Body.NodeType}");
+                }
+            }
+            else
+            {
+                throw new NotSupportedException("Sum requires a selector expression.");
+            }
+            _isSum = true;
+            return node;
+        }
+        else if (node.Method.Name == "Where" && node.Method.DeclaringType == typeof(Queryable))
         {
             Visit(node.Arguments[0]); // Visit the source
             if (_sqlBuilder.Length > 0) // If there's an existing WHERE clause

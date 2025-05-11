@@ -28,9 +28,10 @@ public abstract class LibSqlDatabase
         var tables = GetAllTablesInCurrentDatabaseObject();
         foreach (var table in tables)
         {
-            var tableName = table.GetType().GetLibSqlTableName();
-            var indexes = await Client.QueryAsync<SqlMasterInfo>($"SELECT * FROM sqlite_master WHERE type= 'index' and tbl_name = '{tableName}'");
-            var tableInfos = await Client.QueryAsync<TableInfo>($"pragma table_info({tableName})");
+            var tableName = table.PropertyType.GetGenericArguments()[0].GetLibSqlTableName();
+            
+            var indexes = await Client.QueryAsync<SqliteMasterInfo>($"SELECT * FROM sqlite_master WHERE type= 'index' and tbl_name = '{tableName}'");
+            var tableInfos = await Client.QueryAsync<SqliteTableInfo>($"pragma table_info({tableName})");
 
             var tableMemberType = table.PropertyType.GetGenericArguments()[0];
             var commands = TableSynchronizer.GenerateSqlCommands(tableMemberType, tableInfos, indexes);

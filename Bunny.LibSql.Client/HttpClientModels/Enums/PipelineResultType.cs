@@ -8,4 +8,6 @@ public enum PipelineResultType
 {
     [JsonStringEnumMemberName("ok")]
     OK,
+    [JsonStringEnumMemberName("error")]
+    Error,
 }

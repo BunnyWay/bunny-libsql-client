@@ -1,8 +1,11 @@
 using Bunny.LibSql.Client.HttpClientModels;
 using Bunny.LibSql.Client.LINQ;
+using Bunny.LibSql.Client.SQL;
 
 namespace Bunny.LibSql.Client;
 
+// TODO: add drop table / truncate table
+// TODO: add helper methods for multi-update, multi-delete and multi-insert
 public partial class LibSqlTable<T>
 {
     public async Task InsertAsync(T item)

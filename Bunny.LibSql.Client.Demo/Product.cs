@@ -14,5 +14,5 @@ public class Product
     
     [ForeignKey("product_id")]
     [AutoInclude]
-    public List<Description> descriptions { get; set; } = new();
+    public Description? descriptions { get; set; }
 }

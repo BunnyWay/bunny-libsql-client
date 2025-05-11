@@ -11,6 +11,7 @@ public class Person
     [Index]
     public string name { get; set; }
     public string lastName { get; set; }
+    public double age { get; set; }
     [ForeignKey("person_id")]
     [AutoInclude]
     public List<Product> products { get; set; } = new();

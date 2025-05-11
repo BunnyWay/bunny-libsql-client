@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq.Expressions;
 using System.Reflection;
+using Bunny.LibSql.Client.Attributes;
 using Bunny.LibSql.Client.Extensions;
 using Bunny.LibSql.Client.LINQ;
 
@@ -11,6 +12,11 @@ public partial class LibSqlTable<T>
     public LibSqlTable<T> Include<TOther>(Expression<Func<TOther, object>> navigationPropertyPath)
     {
         var leftProperty = navigationPropertyPath.GetSelectedExpressionProperty();
+        if (leftProperty.GetCustomAttribute<AutoIncludeAttribute>() != null)
+        {
+            return this;
+        }
+        
         var joinNavigation = GenerateJoinNavigation(leftProperty);
         if (JoinNavigations.Count > 0)
         {
@@ -24,6 +30,11 @@ public partial class LibSqlTable<T>
     public LibSqlTable<T> Include<TProperty>(Expression<Func<T, TProperty>> navigationPropertyPath)
     {
         var leftProperty = navigationPropertyPath.GetSelectedExpressionProperty();
+        if (leftProperty.GetCustomAttribute<AutoIncludeAttribute>() != null)
+        {
+            return this;
+        }
+        
         var joinNavigation = GenerateJoinNavigation(leftProperty);
         if (JoinNavigations.Count > 0)
         {
