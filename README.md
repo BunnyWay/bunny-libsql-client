@@ -171,6 +171,14 @@ var usersWithOrders = db.Users
     .ToList();
 ```
 
+### Aggregates: Count & Sum
+You can perform aggregate queries such as CountAsync() and SumAsync(...). 
+```csharp
+var userCount = await db.Users.CountAsync();
+var totalPrice = await db.Orders.SumAsync(o => o.price);
+```
+> ⚠️ **Important:** Always use the `Async` variants like `ToListAsync()`, `CountAsync()`, and `SumAsync(...)` to execute queries. Skipping the async call will **not** run the query.
+
 ## ⚡ Direct SQL Queries
 For raw access, you can use the underlying client directly.
 
@@ -221,10 +229,10 @@ await db.ApplyMigrationsAsync();
 
 await db.Users.InsertAsync(new User { id = "1", name = "Dejan" });
 
-var users = db.Users
+var users = await db.Users
     .Include(u => u.Orders)
     .Include<Order>(o => o.Product)
-    .ToList();
+    .ToListAsync();
 
 foreach (var user in users)
 {
