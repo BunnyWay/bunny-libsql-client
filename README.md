@@ -210,8 +210,8 @@ Bunny.LibSQL.Client automatically maps common C# types to supported LibSQL colum
 | `string`    | Textual data                             | Maps to `TEXT`                       |
 | `int`       | 32-bit integer                           | Maps to `INTEGER`                    |
 | `long`      | 64-bit integer                           | Maps to `INTEGER`                    |
-| `double`    | Double-precision floating point          | Maps to `REAL`                       |
-| `float`     | Single-precision floating point          | Maps to `REAL`                       |
+| `double`    | Double-precision floating point          | Maps to `FLOAT`                      |
+| `float`     | Single-precision floating point          | Maps to `FLOAT`                      |
 | `DateTime`  | Date and time representation             | Stored as `INTEGER` UNIX timestamp   |
 | `bool`      | Boolean value                            | Stored as `0` (false) or `1` (true)  |
 | `byte[]`    | Binary data (e.g., files, images)        | **TODO:** Planned support            |
