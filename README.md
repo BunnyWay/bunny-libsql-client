@@ -160,7 +160,7 @@ await db.Products.InsertAsync(new Product
 ```csharp
 var users = db.Users
     .Where(u => u.name.StartsWith("A"))
-    .ToList();
+    .ToListAsync();
 ```
 
 ### Eager Loading with Include 
@@ -168,7 +168,7 @@ var users = db.Users
 var usersWithOrders = db.Users
     .Include(u => u.Orders)
     .Include<Order>(o => o.Product)
-    .ToList();
+    .FirstOrDefaultAsync();
 ```
 
 ### Aggregates: Count & Sum
