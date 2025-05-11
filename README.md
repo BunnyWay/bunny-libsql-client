@@ -9,7 +9,7 @@ Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsq
 ## ✨ Features
 
 - 🌐 HTTP-based access to LibSQL endpoints
-- 🧠 Lightweight ORM-like structure
+- 🧠 Lightweight ORM
 - ⚡ Async operations with `InsertAsync`, `QueryAsync`, and more
 - 🔗 LINQ query support with `Include()` and `AutoInclude` for eager loading
 - 🧱 Auto-migration via `ApplyMigrationsAsync`
