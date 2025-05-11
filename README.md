@@ -22,9 +22,6 @@ Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsq
 > **Note:** This library is currently a **Work In Progress (WIP)** prototype and not yet intended for production use. While foundational ORM and querying features are available, several important enhancements are still in progress.
 
 ### Planned Features
-- **✨ Full Complex Type Support**  
-  Introduce the full support for complex types such as DateTime
-
 - **🔁 Many-to-Many Relationships**  
   Implement support for many-to-many relationships via join tables and automated mapping.
 
