@@ -149,7 +149,7 @@ await db.ApplyMigrationsAsync();
 ## 📥 Manage Records
 You can easily insert, update, or delete records using InsertAsync, UpdateAsync, and DeleteAsync methods.
 
-### 📥 Insert
+### 📥 Insert a record
 Insert records using InsertAsync.
 ```csharp
 await db.Users.UpdateAsync(new User
@@ -159,7 +159,7 @@ await db.Users.UpdateAsync(new User
 });
 ```
 
-### ✏️ Update
+### ✏️ Update a record
 Insert records using UpdateAsync.
 
 ```csharp
@@ -168,7 +168,7 @@ user.email = "updated-super@bunny.net";
 await db.Users.UpdateAsync(user);
 ```
 
-### ❌ Delete
+### ❌ Delete a record
 Delete records using DeleteAsync.
 
 ```csharp
