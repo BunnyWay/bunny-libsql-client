@@ -119,6 +119,8 @@ public class Product
     [Key]
     public string id { get; set; }
     public string name { get; set; }
+    [Unique]
+    public string product_code { get; set; }
 }
 ```
 
@@ -196,6 +198,7 @@ The Bunny.LibSQL.Client ORM system uses attributes to define and control table s
 | `Index`        | Creates an index on the annotated property for faster lookups.              |
 | `ForeignKey`   | Defines a relationship to another table by specifying the foreign key property name. |
 | `AutoInclude`  | Enables eager loading of the related property automatically during queries. |
+| `Unique`       | Marks the field with the UNIQUE constraint, ensuring a unique value in every row. |
 
 
 ## 🧮 Supported Data Types
@@ -212,7 +215,7 @@ Bunny.LibSQL.Client automatically maps common C# types to supported LibSQL colum
 | `decimal`   | Double-precision floating point          | Maps to `REAL`                       |
 | `DateTime`  | Date and time representation             | Stored as `INTEGER` UNIX timestamp   |
 | `bool`      | Boolean value                            | Stored as `0` (false) or `1` (true)  |
-| `byte[]`    | Binary data (e.g., files, images)        | **TODO:** Planned support            |
+| `byte[]`    | Binary data (e.g., files, images)        | Maps to `BLOB`                       |
 
 > ⚠️ **Note:** Nullable variants (e.g., `int?`, `bool?`, etc.) are also supported and will map to nullable columns.
 
