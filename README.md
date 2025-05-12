@@ -146,7 +146,7 @@ var db = new AppDb(dbUrl, accessKey);
 await db.ApplyMigrationsAsync();
 ```
 
-### 📥 Manage Records
+## 📥 Manage Records
 You can easily insert, update, or delete records using InsertAsync, UpdateAsync, and DeleteAsync methods.
 
 ### 📥 Insert
