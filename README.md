@@ -116,7 +116,6 @@ public class ProductOrder
     [Key]
     public string id { get; set; }
 
-
     [ForeignKeyFor(typeof(Order))]
     public string order_id { get; set; }
 
