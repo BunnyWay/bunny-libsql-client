@@ -145,19 +145,29 @@ await db.ApplyMigrationsAsync();
 
 ## 📥 Insert Data
 Insert records using InsertAsync.
-
 ```csharp
-await db.Users.InsertAsync(new User
+await db.Users.UpdateAsync(new User
 {
     id = "1",
     name = "Alice"
 });
+```
 
-await db.Products.InsertAsync(new Product
-{
-    id = "p1",
-    name = "Carrot Sneakers"
-});
+## 📥 Update Items
+Insert records using UpdateAsync.
+
+```csharp
+var user = await db.Users.Where(e => e.email == "super@bunny.net").FirstOrDefaultAsync();
+user.email = "updated-super@bunny.net";
+await db.Users.UpdateAsync(user);
+```
+
+## 📥 Delete Items
+Delete records using DeleteAsync.
+
+```csharp
+var user = await db.Users.Where(e => e.email == "super@bunny.net").FirstOrDefaultAsync();
+await db.Users.DeleteAsync(user);
 ```
 
 ## 🔍 Query with LINQ
