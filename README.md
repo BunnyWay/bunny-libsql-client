@@ -105,12 +105,26 @@ public class Order
 {
     [Key]
     public int id { get; set; }
+    [ForeignKeyFor(typeof(User))]
     public string user_id { get; set; }
-    public string product_id { get; set; }
 
     [AutoInclude]
-    [ForeignKey("product_id")]
-    public Product Product { get; set; }
+    [ManyToMany(typeof(ProductOrder))]
+    public List<Product> Product { get; set; }
+}
+
+[Table("ProductOrder")]
+public class ProductOrder
+{
+    [Key]
+    public string id { get; set; }
+
+
+    [ForeignKeyFor(typeof(Order))]
+    public string order_id { get; set; }
+
+    [ForeignKeyFor(typeof(Product))]
+    public string product_id { get; set; }
 }
 
 [Table("Products")]
