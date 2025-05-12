@@ -172,7 +172,7 @@ await db.Users.UpdateAsync(user);
 Delete records using DeleteAsync.
 
 ```csharp
-var user = await db.Users.Where(e => e.email == "super@bunny.net").FirstOrDefaultAsync();
+var user = await db.Users.Where(e => e.email == "updated-super@bunny.net").FirstOrDefaultAsync();
 await db.Users.DeleteAsync(user);
 ```
 
