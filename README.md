@@ -22,9 +22,6 @@ Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsq
 > **Note:** This library is currently a **Work In Progress (WIP)** prototype and not yet intended for production use. While foundational ORM and querying features are available, several important enhancements are still in progress.
 
 ### Planned Features
-- **🔁 Many-to-Many Relationships**  
-  Implement support for many-to-many relationships via join tables and automated mapping.
-
 - **💳 Transaction Support**  
   Introduce transaction handling to allow atomic multi-step operations.
 
@@ -92,11 +89,11 @@ public class User
 {
     [Key]
     public int id { get; set; }
+
     [Index]
     public string name { get; set; }
 
     [AutoInclude]
-    [ForeignKey("user_id")]
     public List<Order> Orders { get; set; } = new();
 }
 
@@ -105,12 +102,26 @@ public class Order
 {
     [Key]
     public int id { get; set; }
+
+    [ForeignKeyFor(typeof(User))]
     public string user_id { get; set; }
-    public string product_id { get; set; }
 
     [AutoInclude]
-    [ForeignKey("product_id")]
-    public Product Product { get; set; }
+    [ManyToMany(typeof(ProductOrder))]
+    public List<Product> Product { get; set; }
+}
+
+[Table("ProductOrder")]
+public class ProductOrder
+{
+    [Key]
+    public string id { get; set; }
+
+    [ForeignKeyFor(typeof(Order))]
+    public string order_id { get; set; }
+
+    [ForeignKeyFor(typeof(Product))]
+    public string product_id { get; set; }
 }
 
 [Table("Products")]
