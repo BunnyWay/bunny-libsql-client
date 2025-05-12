@@ -17,7 +17,10 @@ public class Person
     
     public int? age2 { get; set; }
     
-    [ForeignKey("person_id")]
+    [ManyToMany(typeof(PersonTool))]
+    [AutoInclude]
+    public List<Tool> tools { get; set; } = new();
+    
     [AutoInclude]
     public List<Product> products { get; set; } = new();
 }

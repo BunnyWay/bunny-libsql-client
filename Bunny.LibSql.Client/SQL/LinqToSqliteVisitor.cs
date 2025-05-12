@@ -90,7 +90,9 @@ public class LinqToSqliteVisitor : ExpressionVisitor
                 finalSql.Append(" LEFT JOIN ");
                 finalSql.Append(join.RightDataType.GetLibSqlTableName());
                 finalSql.Append(" ON ");
-                finalSql.Append($"{join.LeftDataType.GetLibSqlTableName()}.{join.LeftDataType.GetLibSqlPrimaryKeyProperty().Name} = {join.RightDataType.GetLibSqlTableName()}.{join.RightProperty.Name}");
+                finalSql.Append($"{join.LeftDataType.GetLibSqlTableName()}.{join.LeftProperty.Name} = {join.RightDataType.GetLibSqlTableName()}.{join.RightProperty.Name}");
+                
+                //join.LeftProperty.GetLibSqlPrimaryKeyProperty().Name
             }
 
             // WHERE clause

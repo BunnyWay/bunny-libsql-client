@@ -14,9 +14,10 @@ public class Product
     [AllowNull]
     [Index]
     public string name { get; set; }
+    
+    [ForeignKeyFor(typeof(Person))]
     public string person_id { get; set; }
     
-    [ForeignKey("product_id")]
     [AutoInclude]
     public Description? descriptions { get; set; }
 }

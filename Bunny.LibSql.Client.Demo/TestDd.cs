@@ -12,4 +12,6 @@ public class TestDd : LibSqlDatabase
     public LibSqlTable<Person> People { get; set; }
     public LibSqlTable<Product> Products { get; set; }
     public LibSqlTable<Description> Descriptions { get; set; }
+    public LibSqlTable<PersonTool> PersonTools { get; set; }
+    public LibSqlTable<Tool> Tools { get; set; }
 }

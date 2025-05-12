@@ -1,14 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Bunny.LibSql.Client.Attributes;
 
 namespace Bunny.LibSql.Client.Demo;
 
-public class Description
+public class Tool
 {
     [Key]
-    public int id { get; set; }
+    public long id { get; set; }
     public string name { get; set; }
-    
-    [ForeignKeyFor(typeof(Product))]
-    public string product_id { get; set; }
 }

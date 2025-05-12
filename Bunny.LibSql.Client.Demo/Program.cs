@@ -7,6 +7,13 @@ var accessKey = "";
 //var accessKey = "";
 
 var db = new TestDd(dbUrl, accessKey);
+//await db.ApplyMigrationsAsync();
+
+
+
+
+
+
 
 /*try
 {
@@ -24,8 +31,6 @@ catch (Exception ex)
 {
     
 }*/
-
-await db.ApplyMigrationsAsync();
 
 /*await db.Client.QueryAsync("DELETE FROM Person");
 await db.Client.QueryAsync("DELETE FROM Product");
@@ -51,7 +56,7 @@ await db.Products.InsertAsync(new Product()
 
 var wot = db.People
     .Include(e => e.products)
-    .Include<Product>(b => b.descriptions)
+    //.Include<Product>(b => b.descriptions)
     .ToList();
 
 foreach (var person in wot)

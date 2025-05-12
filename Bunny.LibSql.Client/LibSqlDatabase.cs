@@ -17,7 +17,7 @@ public abstract class LibSqlDatabase
 
     private void InitializeTables()
     {
-        foreach (var table in GetAllTablesInCurrentDatabaseObject())
+        foreach (var table in GetAllTablesInDatabase())
         {
             table.SetValue(this, Activator.CreateInstance(table.PropertyType, this));
         }
@@ -25,7 +25,9 @@ public abstract class LibSqlDatabase
     
     public async Task ApplyMigrationsAsync()
     {
-        var tables = GetAllTablesInCurrentDatabaseObject();
+        var allCommands = new List<string>();
+        
+        var tables = GetAllTablesInDatabase();
         foreach (var table in tables)
         {
             var tableName = table.PropertyType.GetGenericArguments()[0].GetLibSqlTableName();
@@ -35,14 +37,23 @@ public abstract class LibSqlDatabase
 
             var tableMemberType = table.PropertyType.GetGenericArguments()[0];
             var commands = TableSynchronizer.GenerateSqlCommands(tableMemberType, tableInfos, indexes);
-            if (commands.Count > 0)
-            {
-                await Client.QueryMultipleAsync(commands.Select(e => new SqlQuery(e)).ToList());
-            }
+            allCommands.AddRange(commands);
+        }
+        
+        if (allCommands.Count > 0)
+        {
+            await Client.QueryMultipleAsync(allCommands.Select(e => new SqlQuery(e)).ToList());
         }
     }
 
-    private List<PropertyInfo> GetAllTablesInCurrentDatabaseObject()
+    public PropertyInfo? GetDatabasePropertyForType(Type type)
+    {
+        var dbs = GetAllTablesInDatabase();
+        var dbForType = dbs.Where(e => e.PropertyType.GetGenericArguments().First() == type).FirstOrDefault();
+        return dbForType;
+    }
+
+    public List<PropertyInfo> GetAllTablesInDatabase()
     {
         return GetType()
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)

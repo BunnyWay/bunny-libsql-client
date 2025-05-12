@@ -30,7 +30,7 @@ public static class TableSynchronizer
         var sql = new List<string>();
 
         // map existing columns by name (ignore case)
-        var existingColsByName = (existingColumns ?? Enumerable.Empty<SqliteTableInfo>())
+        var existingColsByName = (existingColumns ?? [])
             .ToDictionary(c => c.name, c => c, StringComparer.OrdinalIgnoreCase);
 
         // 0. Detect any type or nullability/uniqueness changes

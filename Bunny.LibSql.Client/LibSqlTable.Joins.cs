@@ -17,14 +17,17 @@ public partial class LibSqlTable<T>
             return this;
         }
         
-        var joinNavigation = GenerateJoinNavigation(leftProperty);
+        var joinNavigations = GenerateJoinNavigations(leftProperty);
         if (JoinNavigations.Count > 0)
         {
-            JoinNavigations.Add(joinNavigation);
+            foreach (var joinNavigation in joinNavigations)
+            {
+                JoinNavigations.Add(joinNavigation);
+            }
             return this;
         }
         
-        return new LibSqlTable<T>(Provider, Expression, Db, JoinNavigations.Concat([joinNavigation]).ToList());
+        return new LibSqlTable<T>(Provider, Expression, Db, JoinNavigations.Concat(joinNavigations).ToList());
     }
     
     public LibSqlTable<T> Include<TProperty>(Expression<Func<T, TProperty>> navigationPropertyPath)
@@ -35,14 +38,17 @@ public partial class LibSqlTable<T>
             return this;
         }
         
-        var joinNavigation = GenerateJoinNavigation(leftProperty);
+        var joinNavigations = GenerateJoinNavigations(leftProperty);
         if (JoinNavigations.Count > 0)
         {
-            JoinNavigations.Add(joinNavigation);
+            foreach (var joinNavigation in joinNavigations)
+            {
+                JoinNavigations.Add(joinNavigation);
+            }
             return this;
         }
         
-        return new LibSqlTable<T>(Provider, Expression, Db, JoinNavigations.Concat([joinNavigation]).ToList());
+        return new LibSqlTable<T>(Provider, Expression, Db, JoinNavigations.Concat(joinNavigations).ToList());
     }
     
     private void LoadAllAutoIncludes()
@@ -55,40 +61,96 @@ public partial class LibSqlTable<T>
         var autoIncludeProperties = type.GetLibSqlAutoIncludeProperties();
         foreach (var property in autoIncludeProperties)
         {
-            var joinNavigation = GenerateJoinNavigation(property.Value);
-            JoinNavigations.Add(joinNavigation);
-            LoadRecursiveAutoIncludesForType(joinNavigation.RightDataType);
+            var joinNavigations = GenerateJoinNavigations(property.Value);
+            foreach (var joinNavigation in joinNavigations)
+            {
+                JoinNavigations.Add(joinNavigation);
+                LoadRecursiveAutoIncludesForType(joinNavigation.RightDataType);
+            }
         }
     }
     
-    private JoinNavigation GenerateJoinNavigation(PropertyInfo leftProperty)
+    private IEnumerable<JoinNavigation> GenerateJoinNavigations(PropertyInfo leftProperty)
     {
         // Get the type of the foreign key
-        var foreignKeyType = leftProperty.PropertyType;
-        if (foreignKeyType.IsGenericType && foreignKeyType.GetGenericTypeDefinition() == typeof(List<>))
+        var rightModelType = leftProperty.PropertyType;
+        if (rightModelType.IsGenericType && rightModelType.GetGenericTypeDefinition() == typeof(List<>))
         {
-            foreignKeyType = foreignKeyType.GetGenericArguments()[0];
+            rightModelType = rightModelType.GetGenericArguments()[0];
         }
+        var leftModelType = leftProperty.DeclaringType!;
+        
         
         // Get ForeignKey attribute
-        var foreignKeyAttribute = leftProperty.GetCustomAttribute<ForeignKeyAttribute>();
-        if (foreignKeyAttribute == null)
-        {
-            throw new ArgumentException("The property does not have a ForeignKey attribute.");
+        var manyToManyAttribute = leftProperty.GetCustomAttribute<ManyToManyAttribute>();
+        if (manyToManyAttribute != null)
+        { 
+            var joinNavigations = GenerateJoinManyToMany(leftProperty, leftModelType, rightModelType, manyToManyAttribute);
+            foreach (var joinNavigation in joinNavigations)
+            {
+                yield return joinNavigation;
+            }
+            yield break;
         }
-
-        // Make sure the target type actually has the foreign key propert
-        var rightProperty = foreignKeyType.GetProperty(foreignKeyAttribute.Name);
-        if (rightProperty == null)
+        else
         {
-            throw new ArgumentException($"The foreign key property '{foreignKeyAttribute.Name}' does not exist on type '{foreignKeyType.Name}'.");
+            yield return GenerateJoinForeignKey(leftProperty, leftModelType, rightModelType);
+        }
+    }
+
+    private IEnumerable<JoinNavigation> GenerateJoinManyToMany(PropertyInfo leftProperty, Type leftModelType, Type rightModelType, ManyToManyAttribute manyToManyAttribute)
+    {
+        var connectorTableProperty = this.Db.GetDatabasePropertyForType(manyToManyAttribute.ConnectionModelType);
+        if (connectorTableProperty == null)
+        {
+            throw new ArgumentException("The property does not have a valid join attribute.");
         }
         
+        var rightType = connectorTableProperty.PropertyType.GetGenericArguments().First();
+        var finalRightType = leftProperty.PropertyType.GetGenericArguments().First();
+        
+        var connectorTableLeftProperty = manyToManyAttribute.ConnectionModelType.GetProperties()?
+            .Where(e => e.GetCustomAttribute<ForeignKeyForAttribute>()?.Type == leftModelType).FirstOrDefault();
+        var connectorTableRightProperty = manyToManyAttribute.ConnectionModelType.GetProperties()?
+            .Where(e => e.GetCustomAttribute<ForeignKeyForAttribute>()?.Type == finalRightType).FirstOrDefault();
+        if (connectorTableLeftProperty == null || connectorTableRightProperty == null)
+        {
+            throw new ArgumentException("Can not find connecting ManyToManyKey attributes on the connection table");
+        }
+        
+        // We connect the left property to the connector table
+        var connectorJoin = new JoinNavigation(
+            leftModelType,
+            rightType,
+            LibSqlExtensions.GetLibSqlPrimaryKeyProperty(leftModelType),
+            connectorTableLeftProperty, 
+            null);
+        yield return connectorJoin;
+
+        
+        var finalRightTypePrimaryKeyProperty = finalRightType.GetLibSqlPrimaryKeyProperty();
+        // We join the final table, and connect the result to the main item
         var joinNavigation = new JoinNavigation(
-            leftProperty.DeclaringType!,
-            foreignKeyType,
-            leftProperty,
-            rightProperty);
+            rightType,
+            finalRightType,
+            connectorTableRightProperty,
+            finalRightTypePrimaryKeyProperty,
+            leftProperty);
+        yield return joinNavigation;
+    }
+    
+    private JoinNavigation GenerateJoinForeignKey(PropertyInfo leftProperty, Type leftModelType, Type rightModelType)
+    {
+        var rightProperty = rightModelType.GetProperties()?
+            .Where(e => e.GetCustomAttribute<ForeignKeyForAttribute>()?.Type == leftModelType).FirstOrDefault();
+        
+        var joinNavigation = new JoinNavigation(
+            leftModelType,
+            rightModelType,
+            this.GetPrimaryKeyProperty(),
+            rightProperty,
+            leftProperty);
         return joinNavigation;
     }
+    
 }

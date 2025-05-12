@@ -6,12 +6,14 @@ public class JoinNavigation(
     Type leftDataType,
     Type rightDataType,
     PropertyInfo leftProperty,
-    PropertyInfo rightProperty)
+    PropertyInfo rightProperty,
+    PropertyInfo? dataProperty)
 {
     public Type LeftDataType { get; } = leftDataType;
     public PropertyInfo LeftProperty { get; } = leftProperty;
     public Type RightDataType { get; } = rightDataType;
     public PropertyInfo RightProperty { get; } = rightProperty;
-
-    public bool LeftPropertyIsList { get; private set; } = leftProperty.PropertyType.GetGenericArguments().Any();
+    public PropertyInfo? DataProperty { get; } = dataProperty;
+    public bool DataPropertyIsList { get; private set; } = 
+        dataProperty != null && dataProperty.PropertyType.GetGenericArguments().Any();
 }

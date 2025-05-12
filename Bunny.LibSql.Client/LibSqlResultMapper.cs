@@ -1,8 +1,5 @@
 using System.Collections;
-using System.Globalization;
-using System.Reflection;
 using Bunny.LibSql.Client.HttpClientModels;
-using Bunny.LibSql.Client.Json;
 using Bunny.LibSql.Client.Json.Enums;
 using Bunny.LibSql.Client.LINQ;
 using Bunny.LibSql.Client.TypeHandling;
@@ -46,8 +43,11 @@ public static class LibSqlResultMapper
         // Create a type map
         var result = new List<T>();
         var joinMapper = new Dictionary<string, object>();
+        var dedupeChecker = new HashSet<string>(); // This ensures each unique item has only been processed once
         foreach (var rowValues in rows)
         {
+            // Contains all the primary keys found in this row
+            var rowPrimaryKeys = new Dictionary<string, string>();
             int colIndex = 0;
             for (var i = 0; i < joins.Count + 1; i++)
             {
@@ -59,8 +59,13 @@ public static class LibSqlResultMapper
                 }
 
                 var primaryKeyProperty = mappedItem.GetLibSqlPrimaryKeyProperty();
-                var key = $"{type.FullName}_{primaryKeyProperty.GetValue(mappedItem)}";
-                if (joinMapper.TryAdd(key, mappedItem) && type == typeof(T))
+                var primaryKeyValue = primaryKeyProperty.GetValue(mappedItem)!.ToString();
+                
+                
+                var joinMapKey = $"{type.FullName}_{primaryKeyValue}";
+
+                rowPrimaryKeys[type.FullName] = primaryKeyValue;
+                if (joinMapper.TryAdd(joinMapKey, mappedItem) && type == typeof(T))
                 {
                     result.Add((T)mappedItem);
                 }
@@ -68,7 +73,7 @@ public static class LibSqlResultMapper
                 if (i > 0)
                 {
                     var join = joins[i - 1];
-                    AttachToExistingItems(join, joinMapper, mappedItem);
+                    AttachToExistingItems(join, joinMapper, rowPrimaryKeys, dedupeChecker, mappedItem);
                 }
             }
         }
@@ -76,20 +81,31 @@ public static class LibSqlResultMapper
         return result;
     }
 
-    private static void AttachToExistingItems(JoinNavigation join, Dictionary<string, object> joinMapper, object mappedItem)
+    private static void AttachToExistingItems(JoinNavigation join, Dictionary<string, object> joinMapper, Dictionary<string, string> rowPrimaryKeys, HashSet<string> dedupeChecker, object mappedItem)
     {
-        var primaryKeyValue = join.RightProperty.GetValue(mappedItem);
-        var parentyId = $"{join.LeftDataType.FullName}_{primaryKeyValue}";
-        if (joinMapper.TryGetValue(parentyId, out var parentItem))
+        if(join.DataProperty?.DeclaringType == null)
+            return;
+        
+        var typeToMap = join.DataProperty.DeclaringType.FullName;
+        var primaryKeyValue = rowPrimaryKeys[typeToMap];
+        var parentId = $"{typeToMap}_{primaryKeyValue}";
+        if (joinMapper.TryGetValue(parentId, out var parentItem))
         {
-            if (join.LeftPropertyIsList)
+            var primaryKeyProperty = mappedItem.GetLibSqlPrimaryKeyProperty();
+            var dedupeKey = $"{parentId}_{mappedItem.GetType().FullName}_{primaryKeyProperty.GetValue(mappedItem)}";
+            if (dedupeChecker.Contains(dedupeKey))
+                return;
+
+            dedupeChecker.Add(dedupeKey);
+
+            if (join.DataPropertyIsList)
             {
-                var list = (IList)join.LeftProperty.GetValue(parentItem);
+                var list = (IList)join.DataProperty.GetValue(parentItem);
                 list.Add(mappedItem);
             }
             else
             {
-                join.LeftProperty.SetValue(parentItem, mappedItem);
+                join.DataProperty.SetValue(parentItem, mappedItem);
             }
         }
     }
