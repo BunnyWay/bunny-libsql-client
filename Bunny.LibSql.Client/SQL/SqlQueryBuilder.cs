@@ -2,7 +2,28 @@ namespace Bunny.LibSql.Client.SQL;
 
 public class SqlQueryBuilder
 {
-    public static SqlQuery BuildInsertQuery<T>(string tableName, object obj)
+    public static SqlQuery BuildUpdateQuery<T>(string tableName, T item, string primaryKey, object primaryKeyValue)
+    {
+        var type = typeof(T);
+        var properties = type.GetProperties();
+        var setClauses = new List<string>();
+        var parameters = new List<object>();
+        foreach (var property in properties)
+        {
+            if (property.PropertyType.IsLibSqlSupportedType() && property.GetValue(item) != null)
+            {
+                setClauses.Add($"{property.Name} = ?");
+                parameters.Add(property.GetValue(item));
+            }
+        }
+        var setClauseString = string.Join(", ", setClauses);
+        var query = $"UPDATE {tableName} SET {setClauseString} WHERE {primaryKey} = ?";
+        parameters.Add(primaryKeyValue);
+        
+        return new SqlQuery(query, parameters.ToArray());
+    }
+    
+    public static SqlQuery BuildInsertQuery<T>(string tableName, T obj)
     {
         var type = typeof(T);
         var properties = type.GetProperties();

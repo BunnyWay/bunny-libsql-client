@@ -6,8 +6,6 @@ using Bunny.LibSql.Client.LINQ;
 namespace Bunny.LibSql.Client;
 
 // TODO: explore whether we can add a "query tracker" to LINQ to get metrics for the exact queries etc.
-// TODO: add data validation support
-// TODO: add change tracking?
 public partial class LibSqlTable<T> : IQueryable<T>
 {
     public readonly string TableName;
@@ -17,6 +15,8 @@ public partial class LibSqlTable<T> : IQueryable<T>
     public IQueryProvider Provider { get; }
     public LibSqlDatabase Db { get; }
     public List<JoinNavigation> JoinNavigations { get; } = [];
+    public bool AutoValidateEntities { get; set; }
+    
     
     #region Constructors
     // This is needed by reflection

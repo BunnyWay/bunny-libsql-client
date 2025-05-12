@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Bunny.LibSql.Client.HttpClientModels;
 using Bunny.LibSql.Client.LINQ;
 using Bunny.LibSql.Client.SQL;
@@ -11,10 +12,27 @@ public partial class LibSqlTable<T>
     {
         if(item == null)
             throw new ArgumentNullException(nameof(item));
+
+        if (AutoValidateEntities)
+        {
+            ValidateEntity(item);
+        }
         
         var query = SqlQueryBuilder.BuildInsertQuery<T>(TableName, item);
         var resp = await Db.Client.QueryAsync(query);
         AssignLastInsertRowId(item, resp);
+    }
+
+    public async Task UpdateAsync(T item)
+    {
+        var keyValue =  PrimaryKeyProperty.GetValue(item);
+        if (keyValue == null)
+        {
+            throw new ArgumentException($"The item does not have a value for the primary key '{PrimaryKeyProperty}'.");
+        }
+        
+        var query = SqlQueryBuilder.BuildUpdateQuery(TableName, item, PrimaryKeyProperty.Name, keyValue);
+        await Db.Client.QueryAsync(query);
     }
 
     public async Task DeleteAsync(T item)
@@ -61,5 +79,11 @@ public partial class LibSqlTable<T>
         {
             throw new InvalidOperationException($"Unsupported primary key type: {keyProperty.PropertyType.Name}");
         }
+    }
+    
+    private void ValidateEntity(T entity)
+    {
+        var ctx = new ValidationContext(entity);
+        Validator.ValidateObject(entity, ctx, validateAllProperties: true);
     }
 }
