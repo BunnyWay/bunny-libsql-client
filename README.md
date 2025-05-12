@@ -52,7 +52,10 @@ For now, clone this repo and include the project in your solution.
 - [🏗️ Define Your Database](#️-define-your-database)
 - [📐 Define Your Models](#-define-your-models)
 - [⚙️ Initialize & Migrate](#️-initialize--migrate)
-- [📥 Insert Data](#-insert-data)
+- [📥 Manage Records](#-insert-data)
+  - [📥 Insert](#-insert)
+  - [✏️ Update](#-update)
+  - [❌ Delete](#-delete)
 - [🔍 Query with LINQ](#-query-with-linq)
   - [Basic Query](#basic-query)
   - [Eager Loading with Include](#eager-loading-with-include)
@@ -143,7 +146,10 @@ var db = new AppDb(dbUrl, accessKey);
 await db.ApplyMigrationsAsync();
 ```
 
-## 📥 Insert Data
+### 📥 Manage Records
+You can easily insert, update, or delete records using InsertAsync, UpdateAsync, and DeleteAsync methods.
+
+### 📥 Insert
 Insert records using InsertAsync.
 ```csharp
 await db.Users.UpdateAsync(new User
@@ -153,7 +159,7 @@ await db.Users.UpdateAsync(new User
 });
 ```
 
-## 📥 Update Items
+### ✏️ Update
 Insert records using UpdateAsync.
 
 ```csharp
@@ -162,7 +168,7 @@ user.email = "updated-super@bunny.net";
 await db.Users.UpdateAsync(user);
 ```
 
-## 📥 Delete Items
+### ❌ Delete
 Delete records using DeleteAsync.
 
 ```csharp
