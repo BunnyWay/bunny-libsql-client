@@ -89,11 +89,11 @@ public class User
 {
     [Key]
     public int id { get; set; }
+
     [Index]
     public string name { get; set; }
 
     [AutoInclude]
-    [ForeignKey("user_id")]
     public List<Order> Orders { get; set; } = new();
 }
 
@@ -102,6 +102,7 @@ public class Order
 {
     [Key]
     public int id { get; set; }
+
     [ForeignKeyFor(typeof(User))]
     public string user_id { get; set; }
 
