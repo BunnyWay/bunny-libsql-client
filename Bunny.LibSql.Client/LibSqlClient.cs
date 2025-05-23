@@ -11,16 +11,12 @@ namespace Bunny.LibSql.Client
 {
     // TODO: implement baton for transaction handling
     // TODO: add metrics and statistics
-    // TODO: add query error handling
     // TODO: add logging
-    // TODO: add support for turso /dump
-    // TODO: add support for turso /health
-    // TODO: add support for turso /version
-    // TODO: add support for turso /beta/listen
     public partial class LibSqlClient
     {
         private HttpClient _client = new();
-
+        public string? Baton { get; set; } = null;
+        
         public LibSqlClient(string baseUrl, string accessToken)
         {
             if(baseUrl.StartsWith("libsql://"))
@@ -32,7 +28,7 @@ namespace Bunny.LibSql.Client
                 throw new ArgumentException("Invalid base URL", nameof(baseUrl));
             }
             
-            // TODO: check what to do with the connections
+            // TODO: move this out so we can have multiple clients active, but reusing the same HttpClient instance
             _client.BaseAddress = new Uri(baseUrl);
             _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
         }
@@ -44,6 +40,11 @@ namespace Bunny.LibSql.Client
             content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             req.Content = content;
             return req;
+        }
+        
+        private void ProcessResponseBaton(PipelineResponse response)
+        {
+            Baton = response.Baton;
         }
     }
 }

@@ -14,6 +14,7 @@ namespace Bunny.LibSql.Client
         private string CreatePipelinecallAsJson(List<SqlQuery> queries)
         {
             var call = new PipelineCall();
+            call.Baton = Baton;
             foreach (var query in queries)   
             {
                 call.Requests.Add(new PipelineRequest()

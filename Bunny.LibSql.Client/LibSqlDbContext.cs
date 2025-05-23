@@ -5,17 +5,17 @@ using Bunny.LibSql.Client.SQL;
 
 namespace Bunny.LibSql.Client;
 
-public abstract class LibSqlDatabase
+public abstract class LibSqlDbContext
 {
     public LibSqlClient Client { get; }
 
-    protected LibSqlDatabase(LibSqlClient client)
+    protected LibSqlDbContext(LibSqlClient client)
     {
         Client = client;
-        InitializeTables();
+        InitializeTableObjects();
     }
 
-    private void InitializeTables()
+    private void InitializeTableObjects()
     {
         foreach (var table in GetAllTablesInDatabase())
         {

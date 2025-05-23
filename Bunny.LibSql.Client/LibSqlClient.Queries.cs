@@ -12,8 +12,16 @@ namespace Bunny.LibSql.Client
 {
     public partial class LibSqlClient
     {
-        public Task<PipelineResponse?> QueryAsync(SqlQuery reqqueryuest, CancellationToken cancellationToken = default) => QueryAsync(reqqueryuest.SqlCommand, reqqueryuest.Args, cancellationToken);
+        public Task<PipelineResponse?> QueryAsync(SqlQuery reqqueryuest, CancellationToken cancellationToken = default) 
+            => QueryMultipleAsync([reqqueryuest], cancellationToken);
 
+        public Task BeginTransactionAsync(CancellationToken cancellationToken = default) 
+            => QueryAsync("BEGIN TRANSACTION", null, cancellationToken);
+        public Task CommitTransactionAsync(CancellationToken cancellationToken = default) 
+            => QueryAsync("COMMIT TRANSACTION", null, cancellationToken);
+        public Task RollbackTransactionAsync(CancellationToken cancellationToken = default) 
+            => QueryAsync("ROLLBACK TRANSACTION", null, cancellationToken);
+        
         public async Task<PipelineResponse?> QueryMultipleAsync(List<SqlQuery> queries, CancellationToken cancellationToken = default)
         {
             var postJson = CreatePipelinecallAsJson(queries);
@@ -22,9 +30,10 @@ namespace Bunny.LibSql.Client
             {
                 using var req = CreateHttpPostRequest(postJson, "/v2/pipeline");
                 using var response = await _client.SendAsync(req, cancellationToken);
-                receiveJson = await response.Content.ReadAsStringAsync();
+                receiveJson = await response.Content.ReadAsStringAsync(cancellationToken);
                 
                 var pipelineResponse = JsonSerializer.Deserialize<PipelineResponse>(receiveJson);
+                ProcessResponseBaton(pipelineResponse!);
                 CheckResponseForErrors(queries.Select(e => e.sql).ToArray(), pipelineResponse);
                 return pipelineResponse;
             }
@@ -33,30 +42,15 @@ namespace Bunny.LibSql.Client
                 throw new LibSqlClientException(e.Message, postJson, receiveJson, null, e);
             }
         }
+  
         
-        public async Task<PipelineResponse?> QueryAsync(string query, IEnumerable<object>? args = null, CancellationToken cancellationToken = default)
-        {
-            var postJson = CreatePipelinecallAsJson(query, args);
-            string? receiveJson = null;
+        public async Task<PipelineResponse?> QueryAsync(string query, IEnumerable<object>? args = null, CancellationToken cancellationToken = default) => await QueryAsync(new SqlQuery(query, args?.ToArray()), cancellationToken);
 
-            try
-            {
-                using var req = CreateHttpPostRequest(postJson, "/v2/pipeline");
-                using var response = await _client.SendAsync(req, cancellationToken);
-                receiveJson = await response.Content.ReadAsStringAsync(cancellationToken);
-                var pipelineResponse = JsonSerializer.Deserialize<PipelineResponse>(receiveJson);
-                CheckResponseForErrors(query, pipelineResponse);
-                return pipelineResponse;
-            }
-            catch (Exception e)
-            {
-                throw new LibSqlClientException(e.Message, postJson, receiveJson, query, e);
-            }
-        }
+ 
         
         public async Task<List<T>> QueryAsync<T>(string query, IEnumerable<object>? args = null, List<JoinNavigation>? joins = null, CancellationToken cancellationToken = default)
         {
-            var dbResponse = await QueryAsync(query, args, cancellationToken);
+            var dbResponse = await QueryAsync(new SqlQuery(query, args?.ToArray()), cancellationToken);
             var result = dbResponse?.Results?.FirstOrDefault()?.Response?.Result;
             if (result == null)
             {

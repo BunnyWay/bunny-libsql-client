@@ -13,14 +13,14 @@ public partial class LibSqlTable<T> : IQueryable<T>
     public Type ElementType => typeof(T);
     public Expression Expression { get; }
     public IQueryProvider Provider { get; }
-    public LibSqlDatabase Db { get; }
+    public LibSqlDbContext Db { get; }
     public List<JoinNavigation> JoinNavigations { get; } = [];
     public bool AutoValidateEntities { get; set; }
     
     
     #region Constructors
     // This is needed by reflection
-    public LibSqlTable(LibSqlDatabase db)
+    public LibSqlTable(LibSqlDbContext db)
     {
         Db = db;
         TableName = GetTableName();
@@ -28,7 +28,7 @@ public partial class LibSqlTable<T> : IQueryable<T>
         Provider = new LibSqlQueryProvider<T>(this);
         Expression = Expression.Constant(this);
     }
-    public LibSqlTable(IQueryProvider provider, Expression expression, LibSqlDatabase db)
+    public LibSqlTable(IQueryProvider provider, Expression expression, LibSqlDbContext db)
     {
         Db = db;
         Provider = provider;
@@ -36,7 +36,7 @@ public partial class LibSqlTable<T> : IQueryable<T>
         Provider = new LibSqlQueryProvider<T>(this);
         TableName = GetTableName();
     }
-    public LibSqlTable(IQueryProvider provider, Expression expression, LibSqlDatabase db, List<JoinNavigation> joinNavigations)
+    public LibSqlTable(IQueryProvider provider, Expression expression, LibSqlDbContext db, List<JoinNavigation> joinNavigations)
     {
         Db = db;
         Provider = provider;
