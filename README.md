@@ -54,10 +54,10 @@ For now, clone this repo and include the project in your solution.
   - [📥 Insert](#-insert)
   - [✏️ Update](#-update)
   - [❌ Delete](#-delete)
-- [📥 Transactions](#-transactions)
 - [🔍 Query with LINQ](#-query-with-linq)
   - [Basic Query](#basic-query)
   - [Eager Loading with Include](#eager-loading-with-include)
+- [🔄 Transactions](#-transactions)
 - [⚡ Direct SQL Queries](#-direct-sql-queries)
   - [🧹 Run a command](#-run-a-command)
   - [🔢 Get a scalar value](#-get-a-scalar-value)
@@ -199,6 +199,51 @@ var userCount = await db.Users.CountAsync();
 var totalPrice = await db.Orders.SumAsync(o => o.price);
 ```
 > ⚠️ **Important:** Always use the `Async` variants like `ToListAsync()`, `CountAsync()`, and `SumAsync(...)` to execute queries. Skipping the async call will **not** run the query.
+
+## 🔄 Transactions
+
+Use transactions to group multiple operations together. If something fails, you can roll back to ensure data consistency.
+
+### 🚀 Begin a Transaction
+```csharp
+await db.Client.BeginTransactionAsync();
+```
+
+
+### ✅ Commit a Transaction
+```csharp
+await db.Client.CommitTransactionAsync();
+```
+
+### ❌ Rollback a Transaction
+```csharp
+await db.Client.RollbackTransactionAsync();
+```
+
+### 💡 Full transaction example
+```csharp
+await db.Client.BeginTransactionAsync();
+
+try
+{
+    await db.People.InsertAsync(new Person
+    {
+        name = "dejan",
+        lastName = "pelzel",
+    });
+
+    var inserted = await db.People.Where(e => e.name == "dejan5").FirstOrDefaultAsync();
+    Console.WriteLine(inserted.id);
+
+    await db.Client.CommitTransactionAsync();
+}
+catch
+{
+    await db.Client.RollbackTransactionAsync();
+    throw;
+}
+```
+
 
 ## ⚡ Direct SQL Queries
 For raw access, you can use the underlying client directly.
