@@ -34,7 +34,7 @@ dotnet add package Bunny.LibSql.Client.Demo
 
 ---
 
-## 🧪 Sample App
+## 🧪 Sample Usage
 ```csharp
 var dbContextFactory = new LibSqlDbFactory<AppDb>("https://your-libsql-instance.turso.io/", "your_access_key");
 var db = dbContextFactory.CreateDbContext();
