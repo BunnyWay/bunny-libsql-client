@@ -18,18 +18,6 @@ Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsq
 - 🌀 AI Embedding vector support
 ---
 
-## 🛠️ TODO / Roadmap
-
-> **Note:** This library is currently a **Work In Progress (WIP)** prototype and not yet intended for production use. While foundational ORM and querying features are available, several important enhancements are still in progress.
-
-### Planned 
-
-- **🧪 Unit Tests**  
-Develop a full suite of unit tests to ensure reliability, validate edge cases, and prevent regressions as the library evolves.
-
-
----
-
 We welcome feedback, ideas, and contributions. If you're interested in helping shape the future of this library, feel free to open an issue or pull request!
 
 
