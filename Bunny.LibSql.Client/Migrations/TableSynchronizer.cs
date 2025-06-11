@@ -1,4 +1,5 @@
 using System.Collections;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Bunny.LibSql.Client.Attributes;
@@ -22,6 +23,12 @@ public static class TableSynchronizer
     )
     {
         var tableName = type.Name;
+        var tableAttr = type.GetCustomAttribute<TableAttribute>();
+        if (tableAttr != null)
+        {
+            tableName = tableAttr.Name ?? tableName;
+        }
+        
         var props = type
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead && p.CanWrite && p.PropertyType.IsLibSqlSupportedType())
@@ -155,7 +162,7 @@ public static class TableSynchronizer
 
     private static string BuildColumnDefinition(PropertyInfo p)
     {
-        var typeSql = SqliteToNativeTypeMap.ToSqlType(p.PropertyType);
+        var typeSql = SqliteToNativeTypeMap.ToSqlType(p);
         var nullDef = GetNullabilityDefinition(p);
         var uniqueDef = GetUniqueDefinition(p);
         return $"{p.Name} {typeSql}{nullDef}{uniqueDef}";

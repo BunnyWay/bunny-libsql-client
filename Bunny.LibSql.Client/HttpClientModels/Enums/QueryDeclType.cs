@@ -16,6 +16,8 @@ public enum QueryDeclType
     Text,
     [JsonStringEnumMemberName("BLOB")]
     Blob,
+    [JsonStringEnumMemberName("F32_BLOB(4)")]
+    F32Blob4,
     [JsonStringEnumMemberName("boolean")]
     Boolean,
     [JsonStringEnumMemberName("bigint")]

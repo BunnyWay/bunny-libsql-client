@@ -6,7 +6,7 @@ using Bunny.LibSql.Client.LINQ;
 namespace Bunny.LibSql.Client;
 
 // TODO: explore whether we can add a "query tracker" to LINQ to get metrics for the exact queries etc.
-public partial class LibSqlTable<T> : IQueryable<T>
+public partial class LibSqlTable<T> : IQueryable<T>, IOrderedQueryable<T>
 {
     public readonly string TableName;
     public readonly PropertyInfo PrimaryKeyProperty;

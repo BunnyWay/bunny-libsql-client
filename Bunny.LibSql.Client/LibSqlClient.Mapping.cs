@@ -99,6 +99,15 @@ namespace Bunny.LibSql.Client
                             Value = l.ToString()
                         });
                     }
+                    else if (arg is byte[] b)
+                    {
+                        var base64 = Convert.ToBase64String(b);
+                        libSqlValues.Add(new LibSqlValue()
+                        {
+                            Type = LibSqlValueType.Blob,
+                            Base64 = b
+                        });
+                    }
                     else
                     {
                         libSqlValues.Add(new LibSqlValue()

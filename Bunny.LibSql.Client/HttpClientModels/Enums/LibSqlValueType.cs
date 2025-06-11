@@ -14,4 +14,6 @@ public enum LibSqlValueType
     Integer,
     [JsonStringEnumMemberName("null")]
     Null,
+    [JsonStringEnumMemberName("blob")]
+    Blob,
 }

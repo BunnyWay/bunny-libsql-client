@@ -1,3 +1,5 @@
+using Bunny.LibSql.Client.Types;
+
 public static class LibSqlTypeExtensions
 {
     public static bool IsLibSqlSupportedType(this Type type)
@@ -15,6 +17,8 @@ public static class LibSqlTypeExtensions
         if (type == typeof(bool))
             return true;
         if (type == typeof(DateTime))
+            return true;        
+        if (type == typeof(F32Blob))
             return true;
         if (type == typeof(byte[]))
             return true;

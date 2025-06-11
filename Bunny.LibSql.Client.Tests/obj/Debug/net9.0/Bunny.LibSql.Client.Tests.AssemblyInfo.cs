@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Bunny.LibSql.Client.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+958a5d20634cf811e39299f0904d1046ed52f6f7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+26d56edb93d07541a3775b0f717f1230aaf65f7b")]
 [assembly: System.Reflection.AssemblyProductAttribute("Bunny.LibSql.Client.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Bunny.LibSql.Client.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

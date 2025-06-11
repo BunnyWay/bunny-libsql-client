@@ -34,6 +34,9 @@ public static class LibSqlToNativeValueMapper
                 case QueryDeclType.Blob:
                     BlobQueryDeclTypeMapper.MapBlobToLocalValue(columnDeclaredType.Value, pi, obj, libSqlValue);
                     break;
+                case QueryDeclType.F32Blob4:
+                    F32Blob4QueryDeclTypeMapper.MapF32BlobToLocalValue(columnDeclaredType.Value, pi, obj, libSqlValue);
+                    break;
             }
         }
     }

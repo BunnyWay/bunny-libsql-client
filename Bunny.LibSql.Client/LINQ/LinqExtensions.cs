@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
+using Bunny.LibSql.Client.Types;
 
 namespace Bunny.LibSql.Client.LINQ;
 

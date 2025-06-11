@@ -1,7 +1,9 @@
 using System.Collections;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using Bunny.LibSql.Client.Types;
 
 namespace Bunny.LibSql.Client.LINQ;
 
@@ -143,6 +145,15 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         {
             // This is a simplistic way; real-world scenarios might involve reflection
             // or a dedicated mechanism to resolve entity types to table names.
+            
+            var type = queryable.ElementType;
+            // Get table name attribute
+            var tableAttribute = type.GetCustomAttribute<TableAttribute>();
+            if (tableAttribute?.Name != null)
+            {
+                return tableAttribute.Name;
+            }
+            
             return queryable.ElementType.Name;
         }
         // Add more sophisticated table name resolution as needed
@@ -258,25 +269,62 @@ public class LinqToSqliteVisitor : ExpressionVisitor
             return node;
         }
         // Handle OrderBy and OrderByDescending
-        else if ((node.Method.Name == "OrderBy" || node.Method.Name == "OrderByDescending") && node.Method.DeclaringType == typeof(Queryable))
+        else if ((node.Method.Name == "OrderBy" || node.Method.Name == "OrderByDescending")
+             && node.Method.DeclaringType == typeof(Queryable))
         {
-            Visit(node.Arguments[0]); // Visit the source
+            // 1) Visit the source so any preceding WHERE, JOINs, etc. get processed
+            Visit(node.Arguments[0]);
+
+            // 2) Unwrap the lambda: e => e.full_emb.VectorDistanceCos(bruh12)
             var lambda = (LambdaExpression)StripQuotes(node.Arguments[1]);
-            var memberExpression = lambda.Body as MemberExpression;
-            if (memberExpression == null && lambda.Body is UnaryExpression unary && unary.NodeType == ExpressionType.Convert)
+            
+            // 3) If the body is a call to our vector-distance method, special-case it
+            if (lambda.Body is MethodCallExpression mc
+                && mc.Method.Name == "VectorDistanceCos")
             {
-                memberExpression = unary.Operand as MemberExpression; // Handle cases like x => (object)x.Id
+                // Figure out which argument is the "column"
+                // If you declared it as an instance method: bruh.full_emb.VectorDistanceCos(arg)
+                // then mc.Object is your MemberExpression
+                var columnExpr = mc.Object as MemberExpression 
+                                 ?? mc.Arguments[0] as MemberExpression;
+                if (columnExpr == null)
+                    throw new NotSupportedException("Could not map VectorDistanceCos column");
+
+                var columnName = GetColumnName(columnExpr);
+
+                var rawVector = GetExpressionValue(mc.Arguments.Last()) as F32Blob;
+                if (rawVector == null)
+                    throw new NotSupportedException("Could not evaluate VectorDistanceCos argument");
+
+                // Format it as '[0.064, 0.777, 0.661, 0.687]'
+                var items = rawVector.values
+                    .Select(v => v.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                var literal = $"vector32('[{string.Join(", ", items)}]')";
+
+                // Build the ORDER BY clause
+                var direction = node.Method.Name == "OrderByDescending" ? "DESC" : "ASC";
+                _orderByClauses.Add($"vector_distance_cos({columnName}, {literal}) {direction}");
+
+                return node;
+            }
+
+            // 4) Fallback to your existing MemberExpression logic for normal OrderBy:
+            var memberExpression = lambda.Body as MemberExpression;
+            if (memberExpression == null
+                && lambda.Body is UnaryExpression unary
+                && unary.NodeType == ExpressionType.Convert)
+            {
+                memberExpression = unary.Operand as MemberExpression;
             }
 
             if (memberExpression != null)
             {
-                _orderByClauses.Add($"{GetColumnName(memberExpression)} {(node.Method.Name == "OrderByDescending" ? "DESC" : "ASC")}");
+                _orderByClauses.Add($"{GetColumnName(memberExpression)} " +
+                                    $"{(node.Method.Name == "OrderByDescending" ? "DESC" : "ASC")}");
+                return node;
             }
-            else
-            {
-                throw new NotSupportedException("OrderBy clause must be on a direct member.");
-            }
-            return node;
+
+            throw new NotSupportedException("OrderBy clause must be on a direct member or VectorDistanceCos.");
         }
         // Handle ThenBy and ThenByDescending
         else if ((node.Method.Name == "ThenBy" || node.Method.Name == "ThenByDescending") && node.Method.DeclaringType == typeof(Queryable))
