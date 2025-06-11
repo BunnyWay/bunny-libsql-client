@@ -34,6 +34,29 @@ dotnet add package Bunny.LibSql.Client.Demo
 
 ---
 
+## 🧪 Sample App
+```csharp
+var dbContextFactory = new LibSqlDbFactory<AppDb>("https://your-libsql-instance.turso.io/", "your_access_key");
+var db = dbContextFactory.CreateDbContext();
+await db.ApplyMigrationsAsync();
+
+await db.Users.InsertAsync(new User { id = "1", name = "Dejan" });
+
+var users = await db.Users
+    .Include(u => u.Orders)
+    .Include<Order>(o => o.Product)
+    .ToListAsync();
+
+foreach (var user in users)
+{
+    Console.WriteLine($"User: {user.name}");
+    foreach (var order in user.Orders)
+    {
+        Console.WriteLine($"  Ordered: {order.Product?.name}");
+    }
+}
+```
+
 ## 📚 Table of Contents
 
 - [🏗️ Define Your Database](#️-define-your-database)
@@ -279,25 +302,3 @@ Bunny.LibSQL.Client automatically maps common C# types to supported LibSQL colum
 | `F32Blob`   | Vector F32 blob (e.g. ai embeddings      | Maps to `F32_BLOB`                   |
 
 > ⚠️ **Note:** Nullable variants (e.g., `int?`, `bool?`, etc.) are also supported and will map to nullable columns.
-
-## 🧪 Sample Program
-```csharp
-var db = new AppDb("https://your-libsql-instance.turso.io/", "your_access_key");
-await db.ApplyMigrationsAsync();
-
-await db.Users.InsertAsync(new User { id = "1", name = "Dejan" });
-
-var users = await db.Users
-    .Include(u => u.Orders)
-    .Include<Order>(o => o.Product)
-    .ToListAsync();
-
-foreach (var user in users)
-{
-    Console.WriteLine($"User: {user.name}");
-    foreach (var order in user.Orders)
-    {
-        Console.WriteLine($"  Ordered: {order.Product?.name}");
-    }
-}
-```
