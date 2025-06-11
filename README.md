@@ -246,7 +246,7 @@ try
         lastName = "pelzel",
     });
 
-    var inserted = await db.People.Where(e => e.name == "dejan5").FirstOrDefaultAsync();
+    var inserted = await db.People.Where(e => e.name == "dejan").FirstOrDefaultAsync();
     Console.WriteLine(inserted.id);
 
     await db.Client.CommitTransactionAsync();
