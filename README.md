@@ -37,11 +37,16 @@ We welcome feedback, ideas, and contributions. If you're interested in helping s
 
 ## 🚀 Getting Started
 
-### 📦 Installation
+## 📦 Installation
 
-> Coming soon via NuGet: `Bunny.LibSQL.Client`
+[![NuGet](https://img.shields.io/nuget/v/Bunny.LibSql.Client.Demo.svg)](https://www.nuget.org/packages/Bunny.LibSql.Client.Demo/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Bunny.LibSql.Client.Demo.svg)](https://www.nuget.org/packages/Bunny.LibSql.Client.Demo/)
 
-For now, clone this repo and include the project in your solution.
+Install the package via NuGet:
+
+```bash
+dotnet add package Bunny.LibSql.Client.Demo
+```
 
 ---
 
