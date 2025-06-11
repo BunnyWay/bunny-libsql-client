@@ -35,6 +35,8 @@ dotnet add package Bunny.LibSql.Client.Demo
 ---
 
 ## 🧪 Sample Usage
+Below is a sample application using the LibSql client (Models need to be defined separately). For a full example, you can check the Bunny.LibSql.Client.Demo project (Coming soon).
+
 ```csharp
 var dbContextFactory = new LibSqlDbFactory<AppDb>("https://your-libsql-instance.turso.io/", "your_access_key");
 var db = dbContextFactory.CreateDbContext();
