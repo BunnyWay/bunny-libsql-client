@@ -23,6 +23,8 @@ We welcome feedback, ideas, and contributions. If you're interested in helping s
 
 ## 🚀 Getting Started
 
+> **Note:** This library is currently a **Work In Progress (WIP)** prototype and not yet intended for production use. While foundational ORM and querying features are available, several important enhancements are still in progress.
+
 ## 📦 Installation
 
 [![NuGet](https://img.shields.io/nuget/v/Bunny.LibSql.Client.Demo.svg)](https://www.nuget.org/packages/Bunny.LibSql.Client.Demo/)
