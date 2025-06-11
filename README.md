@@ -22,9 +22,6 @@ Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsq
 
 We welcome feedback, ideas, and contributions. If you're interested in helping shape the future of this library, feel free to open an issue or pull request!
 
-
-## 🚀 Getting Started
-
 ## 📦 Installation
 
 [![NuGet](https://img.shields.io/nuget/v/Bunny.LibSql.Client.Demo.svg)](https://www.nuget.org/packages/Bunny.LibSql.Client.Demo/)
