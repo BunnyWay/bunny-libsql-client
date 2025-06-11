@@ -85,7 +85,7 @@ foreach (var user in users)
 Start by inheriting from `LibSqlDatabase`. Use `LibSqlTable<T>` to define the tables.
 
 ```csharp
-public class AppDb : LibSqlDatabase
+public class AppDb(LibSqlClient client) : LibSqlDbContext(client)
 {
     public AppDb(string dbUrl, string accessKey)
         : base(new LibSqlClient(dbUrl, accessKey)) {}
