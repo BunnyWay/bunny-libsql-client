@@ -6,4 +6,24 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <!-- identity -->
+        <PackageId>Bunny.LibSql.Client</PackageId>
+        <Version>0.9.0</Version>
+
+        <!-- humans -->
+        <Title>Bunny.LibSQL.Client for .NET</Title>
+        <Authors>BunnyWay</Authors>
+        <Description>An HTTP-based lightweight .NET LibSQL ORM client designed for performance and simplicity.</Description>
+        <PackageTags>libsql;db;turso;sqlite;bunnynet</PackageTags>
+
+        <!-- licensing & URLs -->
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/BunnyWay/bunny-libsql-client</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+
+        <!-- optional rich fields -->
+        <PackageProjectUrl>https://github.com/BunnyWay/bunny-libsql-client</PackageProjectUrl>
+        <ReleaseNotes>Pre-release of the Bunny.LibSql.Client</ReleaseNotes>
+    </PropertyGroup>
 </Project>
