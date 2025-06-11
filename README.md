@@ -24,12 +24,12 @@ We welcome feedback, ideas, and contributions. If you're interested in helping s
 
 ## 📦 Installation
 
-[![NuGet](https://img.shields.io/nuget/v/Bunny.LibSql.Client.Demo.svg)](https://www.nuget.org/packages/Bunny.LibSql.Client.Demo/)
+[![NuGet](https://img.shields.io/nuget/v/Bunny.LibSql.Client.svg)](https://www.nuget.org/packages/Bunny.LibSql.Client/)
 
 Install the package via NuGet:
 
 ```bash
-dotnet add package Bunny.LibSql.Client.Demo
+dotnet add package Bunny.LibSql.Client
 ```
 
 ---
