@@ -95,7 +95,7 @@ public class AppDb : LibSqlDatabase
 ```
 
 ## 📐 Define Your Models
-Your models should use standard C# classes. Use attributes to define relationships.
+Your models should use standard C# classes. Use attributes to define relationships. If no Table attribute is provided, the class name will be used as the table name.
 
 ```csharp
 [Table("Users")]
