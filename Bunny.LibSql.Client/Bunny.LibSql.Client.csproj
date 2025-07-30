@@ -9,7 +9,7 @@
     <PropertyGroup>
         <!-- identity -->
         <PackageId>Bunny.LibSql.Client</PackageId>
-        <Version>0.9.1</Version>
+        <Version>$(PackageVersion)</Version>
 
         <!-- humans -->
         <Title>Bunny.LibSQL.Client for .NET</Title>
