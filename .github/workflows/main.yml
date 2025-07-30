@@ -14,6 +14,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set package version from tag
+        id: version
+        run: |
+          RAW_VERSION="${GITHUB_REF##*/}"       # v0.9.1
+          STRIPPED="${RAW_VERSION#v}"           # 0.9.1
+          MAJOR_MINOR=$(echo $STRIPPED | cut -d '.' -f1,2)
+          FINAL_VERSION="$MAJOR_MINOR.0"
+          echo "version=$FINAL_VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -26,7 +35,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Pack
-        run: dotnet pack ./src/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj --configuration Release --no-build --output ./artifacts
+  run: dotnet pack ./src/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj --configuration Release --no-build --output ./artifacts -p:PackageVersion=${{ steps.version.outputs.version }}
 
       - name: Publish to NuGet.org
         run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
