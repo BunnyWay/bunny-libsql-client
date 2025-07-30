@@ -61,6 +61,15 @@ namespace Bunny.LibSql.Client
             var libSqlValues = new List<LibSqlValue>();
             foreach (var arg in args)
             {
+                if (arg == null)
+                {
+                    libSqlValues.Add(new LibSqlValue()
+                    {
+                        Type = LibSqlValueType.Null,
+                    });
+                    continue;
+                }
+                
                 if (arg is LibSqlValue libSqlValue)
                 {
                     libSqlValues.Add(libSqlValue);
@@ -106,6 +115,14 @@ namespace Bunny.LibSql.Client
                         {
                             Type = LibSqlValueType.Blob,
                             Base64 = b
+                        });
+                    }
+                    else if (arg is DateTime dt)
+                    {
+                        libSqlValues.Add(new LibSqlValue()
+                        {
+                            Type = LibSqlValueType.Integer,
+                            Value = dt.ToUnixDate().ToString(),
                         });
                     }
                     else
