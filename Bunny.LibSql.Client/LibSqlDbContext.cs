@@ -25,24 +25,35 @@ public abstract class LibSqlDbContext
     
     public async Task ApplyMigrationsAsync()
     {
-        var allCommands = new List<string>();
-        
-        var tables = GetAllTablesInDatabase();
-        foreach (var table in tables)
+        try
         {
-            var tableName = table.PropertyType.GetGenericArguments()[0].GetLibSqlTableName();
-            
-            var indexes = await Client.QueryAsync<SqliteMasterInfo>($"SELECT * FROM sqlite_master WHERE type= 'index' and tbl_name = '{tableName}'");
-            var tableInfos = await Client.QueryAsync<SqliteTableInfo>($"pragma table_info({tableName})");
+            var allCommands = new List<string>();
+            var tables = GetAllTablesInDatabase();
+            foreach (var table in tables)
+            {
+                var tableName = table.PropertyType.GetGenericArguments()[0].GetLibSqlTableName();
 
-            var tableMemberType = table.PropertyType.GetGenericArguments()[0];
-            var commands = TableSynchronizer.GenerateSqlCommands(tableMemberType, tableInfos, indexes);
-            allCommands.AddRange(commands);
+                var indexes =
+                    await Client.QueryAsync<SqliteMasterInfo>(
+                        $"SELECT * FROM sqlite_master WHERE type= 'index' and tbl_name = '{tableName}'");
+                var tableInfos = await Client.QueryAsync<SqliteTableInfo>($"pragma table_info({tableName})");
+
+                var tableMemberType = table.PropertyType.GetGenericArguments()[0];
+                var commands = TableSynchronizer.GenerateSqlCommands(tableMemberType, tableInfos, indexes);
+                allCommands.AddRange(commands);
+            }
+
+            if (allCommands.Count > 0)
+            {
+                await Client.BeginTransactionAsync();
+                await Client.QueryMultipleAsync(allCommands.Select(e => new SqlQuery(e)).ToList());
+                await Client.CommitTransactionAsync();
+            }
         }
-        
-        if (allCommands.Count > 0)
+        catch (Exception ex)
         {
-            await Client.QueryMultipleAsync(allCommands.Select(e => new SqlQuery(e)).ToList());
+            await Client.RollbackTransactionAsync();
+            throw;
         }
     }
 

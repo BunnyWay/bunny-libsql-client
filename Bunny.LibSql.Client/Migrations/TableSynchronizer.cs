@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Bunny.LibSql.Client.Attributes;
 using Bunny.LibSql.Client.Migrations.InternalModels;
 using Bunny.LibSql.Client.SQL;
@@ -12,12 +13,6 @@ namespace Bunny.LibSql.Client.Migrations;
 
 public static class TableSynchronizer
 {
-    /// <summary>
-    /// Generates all needed DDL to bring the type into sync:
-    /// - create/drop columns
-    /// - create/drop indexes for [Index] and [Join]
-    /// - apply UNIQUE constraints for [Index(Unique = true)] attributes
-    /// </summary>
     public static List<string> GenerateSqlCommands(Type type,
         IEnumerable<SqliteTableInfo> existingColumns,
         IEnumerable<SqliteMasterInfo> existingIndexes
@@ -29,54 +24,71 @@ public static class TableSynchronizer
         {
             tableName = tableAttr.Name ?? tableName;
         }
-        
+
         var props = type
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead && p.CanWrite && p.PropertyType.IsLibSqlSupportedType())
             .ToArray();
-
+        
         var sql = new List<string>();
 
-        // map existing columns by name (ignore case)
         var existingColsByName = (existingColumns ?? [])
             .ToDictionary(c => c.name, c => c, StringComparer.OrdinalIgnoreCase);
 
-        // 0. Detect any type or nullability/uniqueness changes
+        // 0. Detect any type or constraint changes by comparing components
         var changedProps = props
-            .Where(p => existingColsByName.TryGetValue(p.Name, out var colInfo)
-                        && !string.Equals(
-                            BuildColumnDefinition(p),
-                            colInfo.type,
-                            StringComparison.OrdinalIgnoreCase))
+            .Where(p =>
+            {
+                if (!existingColsByName.TryGetValue(p.Name, out var colInfo))
+                {
+                    return false; // This is a new column, not a changed one
+                }
+
+                // Compare each aspect of the column definition
+                var desiredType = SqliteToNativeTypeMap.ToSqlType(p);
+                var isPk = IsPrimaryKey(p);
+
+                // For PKs, SQLite may report the type differently.
+                // An `INTEGER PRIMARY KEY` is the only type that supports AUTOINCREMENT.
+                if (isPk && desiredType == "INTEGER" && colInfo.type.Equals("INTEGER", StringComparison.OrdinalIgnoreCase))
+                {
+                    // It's an integer primary key, types match. Check other constraints.
+                }
+                else if (!desiredType.Equals(colInfo.type, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true; // Type has changed
+                }
+
+                if (isPk != (colInfo.pk > 0)) return true; // PK status changed
+                if (IsNotNull(p) != colInfo.notnull && !isPk) return true; // Nullability changed (PK is implicitly not null)
+                
+                // Note: The base `table_info` doesn't include UNIQUE constraints for non-PK columns.
+                // We check that separately against the index list.
+                if (IsUnique(p) != IsColumnUniqueInDb(p.Name, tableName, existingIndexes)) return true;
+
+                return false;
+            })
             .ToArray();
+
 
         if (changedProps.Any())
         {
             // We need to rebuild the table
             var newColumnsDef = props
-                .Select(p => BuildColumnDefinition(p))
+                .Select(BuildDesiredColumnDefinition)
                 .ToList();
 
             var columnList = string.Join(", ", props.Select(p => p.Name));
             var columnListWithType = string.Join(", ", newColumnsDef);
 
             sql.Add("PRAGMA foreign_keys=OFF;");
-            sql.Add("BEGIN TRANSACTION;");
-
-            // 1) Create new shadow table with UNIQUE constraints
             sql.Add($"CREATE TABLE {tableName}_new ({columnListWithType});");
-
-            // 2) Copy data across (SQLite will convert types where it can)
             sql.Add(
                 $"INSERT INTO {tableName}_new ({columnList}) " +
                 $"SELECT {columnList} FROM {tableName};"
             );
-
-            // 3) Drop old and rename new
             sql.Add($"DROP TABLE {tableName};");
             sql.Add($"ALTER TABLE {tableName}_new RENAME TO {tableName};");
-
-            sql.Add("COMMIT;");
             sql.Add("PRAGMA foreign_keys=ON;");
         }
         else
@@ -84,24 +96,21 @@ public static class TableSynchronizer
             // — Columns sync: only create/add/drop if no rebuild needed —
             var existingNames = existingColsByName.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            // 1. CREATE TABLE if empty
             if (existingNames.Count == 0)
             {
-                var cols = props.Select(p => BuildColumnDefinition(p));
+                var cols = props.Select(BuildDesiredColumnDefinition);
                 sql.Add($"CREATE TABLE IF NOT EXISTS {tableName} ({string.Join(", ", cols)});");
             }
             else
             {
-                // 2. ADD missing
                 foreach (var p in props)
                 {
                     if (!existingNames.Contains(p.Name))
                     {
-                        sql.Add($"ALTER TABLE {tableName} ADD COLUMN {BuildColumnDefinition(p)};");
+                        sql.Add($"ALTER TABLE {tableName} ADD COLUMN {BuildDesiredColumnDefinition(p)};");
                     }
                 }
 
-                // 3. DROP removed (SQLite 3.35+)
                 var propNames = props.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 foreach (var col in existingColumns)
                 {
@@ -115,12 +124,11 @@ public static class TableSynchronizer
         var existingIdx = (existingIndexes ?? Enumerable.Empty<SqliteMasterInfo>())
             .Where(i => i.type.Equals("index", StringComparison.OrdinalIgnoreCase)
                         && i.tbl_name.Equals(tableName, StringComparison.OrdinalIgnoreCase))
-            .Select(i => i.name)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            .ToDictionary(i => i.name, StringComparer.OrdinalIgnoreCase);
 
         var desired = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        // [Index] attributes: skip Unique ones
+        // [Index] attributes: skip Unique ones as they are part of the table definition
         foreach (var p in props)
         {
             var att = p.GetCustomAttribute<IndexAttribute>();
@@ -150,52 +158,75 @@ public static class TableSynchronizer
 
         // Add missing indexes
         foreach (var kv in desired)
-            if (!existingIdx.Contains(kv.Key))
+            if (!existingIdx.ContainsKey(kv.Key))
                 sql.Add(kv.Value);
 
-        // Drop stale indexes
-        foreach (var idx in existingIdx)
-            if (!desired.ContainsKey(idx))
-                sql.Add($"DROP INDEX IF EXISTS {idx};");
-
+        // Drop stale indexes (but don't drop UNIQUE constraint indexes)
+        foreach (var idxName in existingIdx.Keys)
+        {
+            if (!desired.ContainsKey(idxName) && !IsIndexForUniqueConstraint(existingIdx[idxName]))
+            {
+                sql.Add($"DROP INDEX IF EXISTS {idxName};");
+            }
+        }
+        
         return sql;
     }
-
-    private static string BuildColumnDefinition(PropertyInfo p)
+    
+    // --- Helper methods for checking property attributes ---
+    
+    private static bool IsPrimaryKey(PropertyInfo p)
     {
-        // Check if the property is an integer with the [Key] attribute.
         var keyAttr = p.GetCustomAttribute<KeyAttribute>();
         var isIntegerType = p.PropertyType == typeof(int) || p.PropertyType == typeof(long);
+        return keyAttr != null && isIntegerType;
+    }
 
-        if (keyAttr != null && isIntegerType)
+    private static bool IsNotNull(PropertyInfo p)
+    {
+        if (p.GetCustomAttribute<NotNullAttribute>() != null) return true;
+        if (p.GetCustomAttribute<AllowNullAttribute>() != null) return false;
+        // Value types (like int, bool) are not null unless they are Nullable<>
+        return p.PropertyType.IsValueType && !p.PropertyType.IsNullableType();
+    }
+
+    private static bool IsUnique(PropertyInfo p)
+    {
+        var att = p.GetCustomAttribute<IndexAttribute>();
+        return att != null && att.Unique;
+    }
+
+    // --- Helper methods for checking database state ---
+
+    private static bool IsColumnUniqueInDb(string columnName, string tableName, IEnumerable<SqliteMasterInfo> indexes)
+    {
+        return (indexes ?? Enumerable.Empty<SqliteMasterInfo>())
+            .Any(idx => IsIndexForUniqueConstraint(idx)
+                        && idx.tbl_name.Equals(tableName, StringComparison.OrdinalIgnoreCase)
+                        // This regex ensures we match the column exactly, e.g., `(Name)` and not `(NameSuffix)`
+                        && Regex.IsMatch(idx.sql, $@"\(\s*`?{Regex.Escape(columnName)}`?\s*\)", RegexOptions.IgnoreCase));
+    }
+    
+    private static bool IsIndexForUniqueConstraint(SqliteMasterInfo index)
+    {
+        // A UNIQUE constraint creates a unique index. The SQL definition will contain "CREATE UNIQUE INDEX".
+        // SQLite also creates automatic indexes for PRIMARY KEYs, which we want to ignore here.
+        return index.sql != null 
+               && index.sql.Contains("CREATE UNIQUE INDEX", StringComparison.OrdinalIgnoreCase)
+               && !index.name.StartsWith("sqlite_autoindex"); // Exclude PK indexes
+    }
+    
+    private static string BuildDesiredColumnDefinition(PropertyInfo p)
+    {
+        if (IsPrimaryKey(p))
         {
-            // For SQLite, AUTOINCREMENT requires the type to be exactly 'INTEGER'.
-            // A primary key is implicitly NOT NULL and UNIQUE.
             return $"{p.Name} INTEGER PRIMARY KEY AUTOINCREMENT";
         }
 
-        // Original logic for all other columns.
         var typeSql = SqliteToNativeTypeMap.ToSqlType(p);
-        var nullDef = GetNullabilityDefinition(p);
-        var uniqueDef = GetUniqueDefinition(p);
+        var nullDef = IsNotNull(p) ? " NOT NULL" : string.Empty;
+        var uniqueDef = IsUnique(p) ? " UNIQUE" : string.Empty;
     
         return $"{p.Name} {typeSql}{nullDef}{uniqueDef}";
-    }
-
-    private static string GetNullabilityDefinition(PropertyInfo p)
-    {
-        if (p.GetCustomAttribute<NotNullAttribute>() != null)
-            return " NOT NULL";
-        if (p.GetCustomAttribute<AllowNullAttribute>() != null)
-            return string.Empty;
-        if (p.PropertyType.IsValueType)
-            return p.PropertyType.IsNullableType() ? string.Empty : " NOT NULL";
-        return string.Empty;
-    }
-
-    private static string GetUniqueDefinition(PropertyInfo p)
-    {
-        var att = p.GetCustomAttribute<IndexAttribute>();
-        return att != null && att.Unique ? " UNIQUE" : string.Empty;
     }
 }
