@@ -3,7 +3,7 @@ name: Publish NuGet package
 on:
   push:
     tags:
-      - 'v*.*.*'  # Trigger only on version tags like v1.2.3
+      - 'v*.*.*'
 
 jobs:
   build-pack-publish:
@@ -17,7 +17,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'  # or your target version
+          dotnet-version: '9.0.x'
 
       - name: Restore dependencies
         run: dotnet restore
@@ -26,7 +26,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Pack
-        run: dotnet pack --configuration Release --no-build --output ./artifacts
+        run: dotnet pack ./src/Bunny.LibSql.Client/Bunny.LibSql.Client.csproj --configuration Release --no-build --output ./artifacts
 
       - name: Publish to NuGet.org
-        run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
