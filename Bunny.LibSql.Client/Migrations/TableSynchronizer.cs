@@ -1,4 +1,5 @@
 using System.Collections;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -162,9 +163,22 @@ public static class TableSynchronizer
 
     private static string BuildColumnDefinition(PropertyInfo p)
     {
+        // Check if the property is an integer with the [Key] attribute.
+        var keyAttr = p.GetCustomAttribute<KeyAttribute>();
+        var isIntegerType = p.PropertyType == typeof(int) || p.PropertyType == typeof(long);
+
+        if (keyAttr != null && isIntegerType)
+        {
+            // For SQLite, AUTOINCREMENT requires the type to be exactly 'INTEGER'.
+            // A primary key is implicitly NOT NULL and UNIQUE.
+            return $"{p.Name} INTEGER PRIMARY KEY AUTOINCREMENT";
+        }
+
+        // Original logic for all other columns.
         var typeSql = SqliteToNativeTypeMap.ToSqlType(p);
         var nullDef = GetNullabilityDefinition(p);
         var uniqueDef = GetUniqueDefinition(p);
+    
         return $"{p.Name} {typeSql}{nullDef}{uniqueDef}";
     }
 

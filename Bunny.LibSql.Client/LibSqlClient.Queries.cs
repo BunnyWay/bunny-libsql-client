@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
@@ -31,6 +32,23 @@ namespace Bunny.LibSql.Client
                 using var req = CreateHttpPostRequest(postJson, "/v2/pipeline");
                 using var response = await _client.SendAsync(req, cancellationToken);
                 receiveJson = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    try
+                    {
+                        
+                        var responseError = JsonSerializer.Deserialize<ResponseError>(receiveJson);
+                        if (responseError != null)
+                        {
+                            throw new LibSqlClientException(responseError.Message, postJson, receiveJson, null, null);
+                        }
+                    }
+                    catch (JsonException)
+                    {
+                        // Ignore
+                    }
+                }
                 
                 var pipelineResponse = JsonSerializer.Deserialize<PipelineResponse>(receiveJson);
                 ProcessResponseBaton(pipelineResponse!);

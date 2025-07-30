@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using Bunny.LibSql.Client.Attributes;
 using Bunny.LibSql.Client.Types;
 
 namespace Bunny.LibSql.Client.SQL;
@@ -35,6 +37,12 @@ public class SqlQueryBuilder
 
         foreach (var property in properties)
         {
+            if (property.GetCustomAttributes(typeof(KeyAttribute), false).Length > 0 && 
+                (property.PropertyType == typeof(int) || property.PropertyType == typeof(long)))
+            {
+                continue;
+            }
+            
             object? value = property.GetValue(obj);
             if (property.PropertyType.IsLibSqlSupportedType())
             {

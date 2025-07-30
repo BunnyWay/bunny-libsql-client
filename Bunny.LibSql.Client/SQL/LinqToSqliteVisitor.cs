@@ -491,6 +491,24 @@ public class LinqToSqliteVisitor : ExpressionVisitor
 
     protected override Expression VisitMember(MemberExpression node)
     {
+        // Check if the member access is on a parameter of the lambda (e.g., "x.zendeskId").
+        // If so, it's a column name.
+        if (node.Expression != null && node.Expression.NodeType == ExpressionType.Parameter)
+        {
+            _sqlBuilder.Append(GetColumnName(node));
+            return node;
+        }
+    
+        // Otherwise, the expression represents a value that needs to be evaluated and parameterized.
+        // This handles captured variables like "ticket.Id".
+        // Your GetExpressionValue method is capable of compiling this expression fragment to get its value.
+        AddParameter(GetExpressionValue(node));
+        _sqlBuilder.Append("?");
+        return node;
+    }
+    
+    /*protected override Expression VisitMember(MemberExpression node)
+    {
         // This is where you'd map CLR properties to database column names
         // For simplicity, we'll assume the member name is the column name.
         // In a real system, you might use attributes or a mapping dictionary.
@@ -511,7 +529,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         // Could also be a member access on a captured variable, e.g., criteria.Name
         // where criteria is an object.
         throw new NotSupportedException($"Member access for {node.Member.Name} on type {node.Expression?.NodeType} is not supported in this context.");
-    }
+    }*/
 
     protected override Expression VisitConstant(ConstantExpression node)
     {
