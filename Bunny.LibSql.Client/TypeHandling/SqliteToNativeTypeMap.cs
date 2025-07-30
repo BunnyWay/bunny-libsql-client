@@ -21,7 +21,6 @@ public static class SqliteToNativeTypeMap
             var size = F32Blob.GetSize(property);
             return $"F32_BLOB({size})";
         }
-        
         // Nullable types
         if (t == typeof(int?)  || t == typeof(long?) || t == typeof(bool?) || t == typeof(DateTime?))
             return "INTEGER";
