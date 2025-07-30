@@ -18,32 +18,46 @@ Bunny.LibSQL.Client is a high-performance .NET client for [LibSQL](https://libsq
 - 🌀 AI Embedding vector support
 ---
 
-## 🛠️ TODO / Roadmap
-
 > **Note:** This library is currently a **Work In Progress (WIP)** prototype and not yet intended for production use. While foundational ORM and querying features are available, several important enhancements are still in progress.
-
-### Planned Features
-- **📦 NuGet Package**  
-  Package and publish the library to [NuGet.org](https://www.nuget.org/) for easier installation and versioning.
-
-- **🧪 Unit Tests**  
-Develop a full suite of unit tests to ensure reliability, validate edge cases, and prevent regressions as the library evolves.
-
-
----
 
 We welcome feedback, ideas, and contributions. If you're interested in helping shape the future of this library, feel free to open an issue or pull request!
 
+## 📦 Installation
 
-## 🚀 Getting Started
+[![NuGet](https://img.shields.io/nuget/v/Bunny.LibSql.Client.svg)](https://www.nuget.org/packages/Bunny.LibSql.Client/)
 
-### 📦 Installation
+Install the package via NuGet:
 
-> Coming soon via NuGet: `Bunny.LibSQL.Client`
-
-For now, clone this repo and include the project in your solution.
+```bash
+dotnet add package Bunny.LibSql.Client
+```
 
 ---
+
+## 🧪 Sample Usage
+Below is a sample application using the LibSql client (Models need to be defined separately). For a full example, you can check the Bunny.LibSql.Client.Demo project (Coming soon).
+
+```csharp
+var dbContextFactory = new LibSqlDbFactory<AppDb>("https://your-libsql-instance.turso.io/", "your_access_key");
+var db = dbContextFactory.CreateDbContext();
+await db.ApplyMigrationsAsync();
+
+await db.Users.InsertAsync(new User { id = "1", name = "Dejan" });
+
+var users = await db.Users
+    .Include(u => u.Orders)
+    .Include<Order>(o => o.Product)
+    .ToListAsync();
+
+foreach (var user in users)
+{
+    Console.WriteLine($"User: {user.name}");
+    foreach (var order in user.Orders)
+    {
+        Console.WriteLine($"  Ordered: {order.Product?.name}");
+    }
+}
+```
 
 ## 📚 Table of Contents
 
@@ -71,7 +85,7 @@ For now, clone this repo and include the project in your solution.
 Start by inheriting from `LibSqlDatabase`. Use `LibSqlTable<T>` to define the tables.
 
 ```csharp
-public class AppDb : LibSqlDatabase
+public class AppDb(LibSqlClient client) : LibSqlDbContext(client)
 {
     public AppDb(string dbUrl, string accessKey)
         : base(new LibSqlClient(dbUrl, accessKey)) {}
@@ -83,7 +97,7 @@ public class AppDb : LibSqlDatabase
 ```
 
 ## 📐 Define Your Models
-Your models should use standard C# classes. Use attributes to define relationships.
+Your models should use standard C# classes. Use attributes to define relationships. If no Table attribute is provided, the class name will be used as the table name.
 
 ```csharp
 [Table("Users")]
@@ -232,7 +246,7 @@ try
         lastName = "pelzel",
     });
 
-    var inserted = await db.People.Where(e => e.name == "dejan5").FirstOrDefaultAsync();
+    var inserted = await db.People.Where(e => e.name == "dejan").FirstOrDefaultAsync();
     Console.WriteLine(inserted.id);
 
     await db.Client.CommitTransactionAsync();
@@ -290,25 +304,3 @@ Bunny.LibSQL.Client automatically maps common C# types to supported LibSQL colum
 | `F32Blob`   | Vector F32 blob (e.g. ai embeddings      | Maps to `F32_BLOB`                   |
 
 > ⚠️ **Note:** Nullable variants (e.g., `int?`, `bool?`, etc.) are also supported and will map to nullable columns.
-
-## 🧪 Sample Program
-```csharp
-var db = new AppDb("https://your-libsql-instance.turso.io/", "your_access_key");
-await db.ApplyMigrationsAsync();
-
-await db.Users.InsertAsync(new User { id = "1", name = "Dejan" });
-
-var users = await db.Users
-    .Include(u => u.Orders)
-    .Include<Order>(o => o.Product)
-    .ToListAsync();
-
-foreach (var user in users)
-{
-    Console.WriteLine($"User: {user.name}");
-    foreach (var order in user.Orders)
-    {
-        Console.WriteLine($"  Ordered: {order.Product?.name}");
-    }
-}
-```
