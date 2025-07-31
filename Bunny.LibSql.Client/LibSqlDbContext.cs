@@ -1,4 +1,5 @@
 using System.Reflection;
+using Bunny.LibSql.Client.HttpClientModels;
 using Bunny.LibSql.Client.Migrations;
 using Bunny.LibSql.Client.Migrations.InternalModels;
 using Bunny.LibSql.Client.SQL;

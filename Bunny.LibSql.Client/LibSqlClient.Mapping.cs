@@ -36,6 +36,8 @@ namespace Bunny.LibSql.Client
         private string CreatePipelinecallAsJson(string query, IEnumerable<object>? args = null)
         {
             var call = new PipelineCall();
+            
+            call.Baton = Baton;
             call.Requests.Add(new PipelineRequest()
             {
                 Stmt = new Statement()

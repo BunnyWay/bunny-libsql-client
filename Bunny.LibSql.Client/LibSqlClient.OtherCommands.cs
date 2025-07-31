@@ -14,13 +14,15 @@ namespace Bunny.LibSql.Client
     {
         public async Task<string> GetDatabaseVersionAsync(CancellationToken cancellationToken = default)
         {
-            return await _client.GetStringAsync("/version", cancellationToken);
+            using var req = CreateGetRequest("/version");
+            using var response = await _httpClient.SendAsync(req, cancellationToken);
+            return await response.Content.ReadAsStringAsync(cancellationToken);
         }
 
         public async Task DumpDatabaseToStreamAsync(Stream stream, CancellationToken cancellationToken = default)
         {
-            using var req = new HttpRequestMessage(HttpMethod.Get, "/dump");
-            using var response = await _client.SendAsync(req, cancellationToken);
+            using var req = CreateGetRequest("/dump");
+            using var response = await _httpClient.SendAsync(req, cancellationToken);
             
             if (response.IsSuccessStatusCode)
             {

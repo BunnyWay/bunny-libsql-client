@@ -30,7 +30,7 @@ namespace Bunny.LibSql.Client
             try
             {
                 using var req = CreateHttpPostRequest(postJson, "/v2/pipeline");
-                using var response = await _client.SendAsync(req, cancellationToken);
+                using var response = await _httpClient.SendAsync(req, cancellationToken);
                 receiveJson = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.BadRequest)
@@ -46,7 +46,7 @@ namespace Bunny.LibSql.Client
                     }
                     catch (JsonException)
                     {
-                        // Ignore
+                        throw new LibSqlClientException(receiveJson, postJson, receiveJson, null, null);
                     }
                 }
                 
@@ -202,5 +202,10 @@ namespace Bunny.LibSql.Client
         }
         public async Task<long> ExecuteScalarAsync(string query, IEnumerable<object>? args = null,
             CancellationToken cancellationToken = default) => await ExecuteScalarAsync<long>(query, args, cancellationToken);
+        
+        private void ProcessResponseBaton(PipelineResponse response)
+        {
+            Baton = response.Baton;
+        }
     }
 }

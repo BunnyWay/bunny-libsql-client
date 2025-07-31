@@ -14,7 +14,10 @@ namespace Bunny.LibSql.Client
     // TODO: add logging
     public partial class LibSqlClient
     {
-        private HttpClient _client = new();
+        private static HttpClient _httpClient = new();
+        private string _accessToken = string.Empty;
+        private string _baseUrl = string.Empty;
+        
         public string? Baton { get; set; } = null;
         
         public LibSqlClient(string baseUrl, string accessToken)
@@ -28,23 +31,34 @@ namespace Bunny.LibSql.Client
                 throw new ArgumentException("Invalid base URL", nameof(baseUrl));
             }
             
-            // TODO: move this out so we can have multiple clients active, but reusing the same HttpClient instance
-            _client.BaseAddress = new Uri(baseUrl);
-            _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+            _accessToken = accessToken;
+            _baseUrl = baseUrl;
+            
+            // Remove trailing slash
+            while(_baseUrl.EndsWith("/"))
+            {
+                _baseUrl = _baseUrl[..^1];
+            }
         }
 
-        private HttpRequestMessage CreateHttpPostRequest(string json, string requestUri)
+        private HttpRequestMessage CreateGetRequest(string requestUri)
         {
-            var req = new HttpRequestMessage(HttpMethod.Post, requestUri);
-            var content = new StringContent(json);
-            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            req.Content = content;
+            var req = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/{requestUri}");
+            req.Headers.Add("Authorization", $"Bearer {_accessToken}");
+            
             return req;
         }
         
-        private void ProcessResponseBaton(PipelineResponse response)
+        private HttpRequestMessage CreateHttpPostRequest(string json, string requestUri)
         {
-            Baton = response.Baton;
+            var req = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}{requestUri}");
+            req.Headers.Add("Authorization", $"Bearer {_accessToken}");
+            
+            var content = new StringContent(json);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            req.Content = content;
+            
+            return req;
         }
     }
 }

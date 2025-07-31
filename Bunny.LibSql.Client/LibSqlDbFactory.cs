@@ -2,16 +2,20 @@ namespace Bunny.LibSql.Client;
 
 public class LibSqlDbFactory<T>
 {
-    public LibSqlClient Client { get; set; }
+    public string Path { get; set; }
+    public string ApiKey { get; set; }
+    
     public LibSqlDbFactory(string path, string apiKey)
     {
-        Client = new LibSqlClient(path, apiKey);
+        Path = path;
+        ApiKey = apiKey;
     }
     
     public T CreateDbContext()
     {
+        var client = new LibSqlClient(Path, ApiKey);
         // activate an instance with reflection
-        var instance = (T)Activator.CreateInstance(typeof(T), Client);
+        var instance = (T)Activator.CreateInstance(typeof(T), client);
         if (instance == null)
             throw new InvalidOperationException($"Could not create an instance of {typeof(T).Name}");
             
