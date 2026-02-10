@@ -97,7 +97,7 @@ public static class LibSqlExtensions
         props = type
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead && p.CanWrite && p.PropertyType.IsLibSqlSupportedType())
-            .ToDictionary(p => p.Name, p => p);
+            .ToDictionary(p => p.GetLibSqlColumnName(), p => p);
 
         _cachedMappableProperties[type] = props;
         return props;
@@ -122,5 +122,16 @@ public static class LibSqlExtensions
         // If no Table attribute is found, use the class name as the table name
         _cachedTableNames[type] = type.Name;
         return type.Name;
+    }
+
+    public static string GetLibSqlColumnName(this PropertyInfo property)
+    {
+        var columnAttribute = property.GetCustomAttribute<ColumnAttribute>();
+        if (!string.IsNullOrWhiteSpace(columnAttribute?.Name))
+        {
+            return columnAttribute.Name;
+        }
+
+        return property.Name;
     }
 }

@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using Bunny.LibSql.Client;
 using Bunny.LibSql.Client.Types;
 
 namespace Bunny.LibSql.Client.LINQ;
@@ -92,7 +93,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
                 finalSql.Append(" LEFT JOIN ");
                 finalSql.Append(join.RightDataType.GetLibSqlTableName());
                 finalSql.Append(" ON ");
-                finalSql.Append($"{join.LeftDataType.GetLibSqlTableName()}.{join.LeftProperty.Name} = {join.RightDataType.GetLibSqlTableName()}.{join.RightProperty.Name}");
+                finalSql.Append($"{join.LeftDataType.GetLibSqlTableName()}.{join.LeftProperty.GetLibSqlColumnName()} = {join.RightDataType.GetLibSqlTableName()}.{join.RightProperty.GetLibSqlColumnName()}");
                 
                 //join.LeftProperty.GetLibSqlPrimaryKeyProperty().Name
             }
@@ -602,8 +603,17 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         // Could be extended with attributes for custom column names.
         // e.g., [Column("user_name")] public string UserName { get; set; }
         var member = memberExpression.Member;
-        // var columnAttribute = member.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ColumnAttribute>();
-        // if (columnAttribute != null) return columnAttribute.Name;
+        if (member is PropertyInfo property)
+        {
+            return property.GetLibSqlColumnName();
+        }
+
+        var columnAttribute = member.GetCustomAttribute<ColumnAttribute>();
+        if (!string.IsNullOrWhiteSpace(columnAttribute?.Name))
+        {
+            return columnAttribute.Name;
+        }
+
         return member.Name;
     }
 

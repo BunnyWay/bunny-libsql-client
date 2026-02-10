@@ -31,7 +31,7 @@ public partial class LibSqlTable<T>
             throw new ArgumentException($"The item does not have a value for the primary key '{PrimaryKeyProperty}'.");
         }
         
-        var query = SqlQueryBuilder.BuildUpdateQuery(TableName, item, PrimaryKeyProperty.Name, keyValue);
+        var query = SqlQueryBuilder.BuildUpdateQuery(TableName, item, PrimaryKeyProperty.GetLibSqlColumnName(), keyValue);
         await Db.Client.QueryAsync(query);
     }
 
@@ -43,7 +43,7 @@ public partial class LibSqlTable<T>
             throw new ArgumentException($"The item does not have a value for the primary key '{PrimaryKeyProperty}'.");
         }
         
-        var query = SqlQueryBuilder.BuildDeleteQuery(TableName, PrimaryKeyProperty.Name, keyValue);
+        var query = SqlQueryBuilder.BuildDeleteQuery(TableName, PrimaryKeyProperty.GetLibSqlColumnName(), keyValue);
         await Db.Client.QueryAsync(query);
     }
     

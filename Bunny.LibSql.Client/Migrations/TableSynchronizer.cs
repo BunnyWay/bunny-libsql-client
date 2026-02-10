@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Bunny.LibSql.Client;
 using Bunny.LibSql.Client.Attributes;
 using Bunny.LibSql.Client.Migrations.InternalModels;
 using Bunny.LibSql.Client.SQL;
@@ -31,15 +32,72 @@ public static class TableSynchronizer
             .ToArray();
         
         var sql = new List<string>();
+        
+        var existingColumnsList = (existingColumns ?? []).ToList();
+        var existingColsByNameOriginal = existingColumnsList
+            .ToDictionary(c => c.name, c => c, StringComparer.OrdinalIgnoreCase);
+        
+        // Detect ColumnAttribute rename scenarios: old schema used property name, new schema uses ColumnAttribute name.
+        var renameOldToNew = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var renameNewToOld = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in props)
+        {
+            var columnName = p.GetLibSqlColumnName();
+            if (columnName.Equals(p.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
 
-        var existingColsByName = (existingColumns ?? [])
+            if (existingColsByNameOriginal.ContainsKey(columnName))
+            {
+                continue;
+            }
+
+            if (existingColsByNameOriginal.TryGetValue(p.Name, out var existingOld))
+            {
+                renameOldToNew[existingOld.name] = columnName;
+                renameNewToOld[columnName] = existingOld.name;
+            }
+        }
+
+        var effectiveExistingColumns = new List<SqliteTableInfo>(existingColumnsList.Count);
+        foreach (var col in existingColumnsList)
+        {
+            if (renameOldToNew.TryGetValue(col.name, out var renamed))
+            {
+                effectiveExistingColumns.Add(new SqliteTableInfo
+                {
+                    cid = col.cid,
+                    name = renamed,
+                    type = col.type,
+                    notnull = col.notnull,
+                    dflt_value = col.dflt_value,
+                    pk = col.pk
+                });
+            }
+            else
+            {
+                effectiveExistingColumns.Add(new SqliteTableInfo
+                {
+                    cid = col.cid,
+                    name = col.name,
+                    type = col.type,
+                    notnull = col.notnull,
+                    dflt_value = col.dflt_value,
+                    pk = col.pk
+                });
+            }
+        }
+
+        var existingColsByName = effectiveExistingColumns
             .ToDictionary(c => c.name, c => c, StringComparer.OrdinalIgnoreCase);
 
         // 0. Detect any type or constraint changes by comparing components
         var changedProps = props
             .Where(p =>
             {
-                if (!existingColsByName.TryGetValue(p.Name, out var colInfo))
+                var columnName = p.GetLibSqlColumnName();
+                if (!existingColsByName.TryGetValue(columnName, out var colInfo))
                 {
                     return false; // This is a new column, not a changed one
                 }
@@ -64,7 +122,7 @@ public static class TableSynchronizer
                 
                 // Note: The base `table_info` doesn't include UNIQUE constraints for non-PK columns.
                 // We check that separately against the index list.
-                if (IsUnique(p) != IsColumnUniqueInDb(p.Name, tableName, existingIndexes)) return true;
+                if (IsUnique(p) != IsColumnUniqueInDb(columnName, tableName, existingIndexes, renameNewToOld)) return true;
 
                 return false;
             })
@@ -78,14 +136,15 @@ public static class TableSynchronizer
                 .Select(BuildDesiredColumnDefinition)
                 .ToList();
 
-            var columnList = string.Join(", ", props.Select(p => p.Name));
+            var columnList = string.Join(", ", props.Select(p => p.GetLibSqlColumnName()));
             var columnListWithType = string.Join(", ", newColumnsDef);
+            var selectColumnList = string.Join(", ", props.Select(p => BuildRebuildSelectColumn(p, existingColsByNameOriginal, renameNewToOld)));
 
             sql.Add("PRAGMA foreign_keys=OFF;");
             sql.Add($"CREATE TABLE {tableName}_new ({columnListWithType});");
             sql.Add(
                 $"INSERT INTO {tableName}_new ({columnList}) " +
-                $"SELECT {columnList} FROM {tableName};"
+                $"SELECT {selectColumnList} FROM {tableName};"
             );
             sql.Add($"DROP TABLE {tableName};");
             sql.Add($"ALTER TABLE {tableName}_new RENAME TO {tableName};");
@@ -103,16 +162,21 @@ public static class TableSynchronizer
             }
             else
             {
+                foreach (var kv in renameOldToNew)
+                {
+                    sql.Add($"ALTER TABLE {tableName} RENAME COLUMN {kv.Key} TO {kv.Value};");
+                }
+
                 foreach (var p in props)
                 {
-                    if (!existingNames.Contains(p.Name))
+                    if (!existingNames.Contains(p.GetLibSqlColumnName()))
                     {
                         sql.Add($"ALTER TABLE {tableName} ADD COLUMN {BuildDesiredColumnDefinition(p)};");
                     }
                 }
 
-                var propNames = props.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                foreach (var col in existingColumns)
+                var propNames = props.Select(p => p.GetLibSqlColumnName()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                foreach (var col in effectiveExistingColumns)
                 {
                     if (!propNames.Contains(col.name))
                         sql.Add($"ALTER TABLE {tableName} DROP COLUMN {col.name};");
@@ -134,8 +198,9 @@ public static class TableSynchronizer
             var att = p.GetCustomAttribute<IndexAttribute>();
             if (att != null && !att.Unique)
             {
-                var idxName = att.Name ?? $"idx_{tableName}_{p.Name}";
-                var ddl = $"CREATE INDEX IF NOT EXISTS {idxName} ON {tableName}({p.Name});";
+                var columnName = p.GetLibSqlColumnName();
+                var idxName = att.Name ?? $"idx_{tableName}_{columnName}";
+                var ddl = $"CREATE INDEX IF NOT EXISTS {idxName} ON {tableName}({columnName});";
                 desired[idxName] = ddl;
             }
         }
@@ -198,13 +263,24 @@ public static class TableSynchronizer
 
     // --- Helper methods for checking database state ---
 
-    private static bool IsColumnUniqueInDb(string columnName, string tableName, IEnumerable<SqliteMasterInfo> indexes)
+    private static bool IsColumnUniqueInDb(
+        string columnName,
+        string tableName,
+        IEnumerable<SqliteMasterInfo> indexes,
+        IReadOnlyDictionary<string, string>? renameNewToOld = null)
     {
+        var candidates = new List<string> { columnName };
+        if (renameNewToOld != null && renameNewToOld.TryGetValue(columnName, out var oldName))
+        {
+            candidates.Add(oldName);
+        }
+
         return (indexes ?? Enumerable.Empty<SqliteMasterInfo>())
             .Any(idx => IsIndexForUniqueConstraint(idx)
                         && idx.tbl_name.Equals(tableName, StringComparison.OrdinalIgnoreCase)
                         // This regex ensures we match the column exactly, e.g., `(Name)` and not `(NameSuffix)`
-                        && Regex.IsMatch(idx.sql, $@"\(\s*`?{Regex.Escape(columnName)}`?\s*\)", RegexOptions.IgnoreCase));
+                        && candidates.Any(name =>
+                            Regex.IsMatch(idx.sql, $@"\(\s*`?{Regex.Escape(name)}`?\s*\)", RegexOptions.IgnoreCase)));
     }
     
     private static bool IsIndexForUniqueConstraint(SqliteMasterInfo index)
@@ -218,15 +294,47 @@ public static class TableSynchronizer
     
     private static string BuildDesiredColumnDefinition(PropertyInfo p)
     {
+        var columnName = p.GetLibSqlColumnName();
         if (IsPrimaryKey(p))
         {
-            return $"{p.Name} INTEGER PRIMARY KEY AUTOINCREMENT";
+            return $"{columnName} INTEGER PRIMARY KEY AUTOINCREMENT";
         }
 
         var typeSql = SqliteToNativeTypeMap.ToSqlType(p);
         var nullDef = IsNotNull(p) ? " NOT NULL" : string.Empty;
         var uniqueDef = IsUnique(p) ? " UNIQUE" : string.Empty;
     
-        return $"{p.Name} {typeSql}{nullDef}{uniqueDef}";
+        return $"{columnName} {typeSql}{nullDef}{uniqueDef}";
+    }
+
+    private static string BuildRebuildSelectColumn(
+        PropertyInfo p,
+        IReadOnlyDictionary<string, SqliteTableInfo> existingColsByName,
+        IReadOnlyDictionary<string, string> renameNewToOld)
+    {
+        var desiredName = p.GetLibSqlColumnName();
+        string? sourceName = null;
+
+        if (existingColsByName.TryGetValue(desiredName, out var existing))
+        {
+            sourceName = existing.name;
+        }
+        else if (renameNewToOld.TryGetValue(desiredName, out var oldName)
+                 && existingColsByName.TryGetValue(oldName, out var oldExisting))
+        {
+            sourceName = oldExisting.name;
+        }
+
+        if (string.IsNullOrWhiteSpace(sourceName))
+        {
+            return $"NULL AS {desiredName}";
+        }
+
+        if (sourceName.Equals(desiredName, StringComparison.OrdinalIgnoreCase))
+        {
+            return desiredName;
+        }
+
+        return $"{sourceName} AS {desiredName}";
     }
 }

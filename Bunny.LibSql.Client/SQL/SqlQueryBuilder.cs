@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Bunny.LibSql.Client;
 using Bunny.LibSql.Client.Attributes;
 using Bunny.LibSql.Client.Types;
 
@@ -16,7 +17,7 @@ public class SqlQueryBuilder
         {
             if (property.PropertyType.IsLibSqlSupportedType() && property.GetValue(item) != null)
             {
-                setClauses.Add($"{property.Name} = ?");
+                setClauses.Add($"{property.GetLibSqlColumnName()} = ?");
                 parameters.Add(property.GetValue(item));
             }
         }
@@ -51,7 +52,7 @@ public class SqlQueryBuilder
                     value = libSqlType.GetLibSqlJsonValue();
                 }
                 
-                columns.Add(property.Name);
+                columns.Add(property.GetLibSqlColumnName());
                 values.Add($"?");
                 parameters.Add(value);
             }
