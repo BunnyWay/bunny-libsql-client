@@ -15,7 +15,7 @@ namespace Bunny.LibSql.Client
         {
             var call = new PipelineCall();
             call.Baton = Baton;
-            foreach (var query in queries)   
+            foreach (var query in queries)
             {
                 call.Requests.Add(new PipelineRequest()
                 {
@@ -27,16 +27,16 @@ namespace Bunny.LibSql.Client
                     Type = PipelineRequestType.Execute,
                 });
             }
-            
-            
+
+
             var postJson = JsonSerializer.Serialize(call);
             return postJson;
         }
-        
+
         private string CreatePipelinecallAsJson(string query, IEnumerable<object>? args = null)
         {
             var call = new PipelineCall();
-            
+
             call.Baton = Baton;
             call.Requests.Add(new PipelineRequest()
             {
@@ -47,19 +47,19 @@ namespace Bunny.LibSql.Client
                 },
                 Type = PipelineRequestType.Execute,
             });
-            
-            
+
+
             var postJson = JsonSerializer.Serialize(call);
             return postJson;
         }
-        
+
         // TODO: move this somewhere else for cleaner code
         private List<LibSqlValue>? GetArgs(IEnumerable<object>? args)
         {
             // Avoid allocating a list if there are no args
             if (args == null || !args.Any())
                 return [];
-            
+
             var libSqlValues = new List<LibSqlValue>();
             foreach (var arg in args)
             {
@@ -71,7 +71,7 @@ namespace Bunny.LibSql.Client
                     });
                     continue;
                 }
-                
+
                 if (arg is LibSqlValue libSqlValue)
                 {
                     libSqlValues.Add(libSqlValue);
@@ -86,12 +86,20 @@ namespace Bunny.LibSql.Client
                             Value = d
                         });
                     }
-                    else if (arg is double f)
+                    else if (arg is float f)
                     {
                         libSqlValues.Add(new LibSqlValue()
                         {
                             Type = LibSqlValueType.Float,
                             Value = f
+                        });
+                    }
+                    else if (arg is decimal m)
+                    {
+                        libSqlValues.Add(new LibSqlValue()
+                        {
+                            Type = LibSqlValueType.Float,
+                            Value = m
                         });
                     }
                     else if (arg is int i)
@@ -112,11 +120,18 @@ namespace Bunny.LibSql.Client
                     }
                     else if (arg is byte[] b)
                     {
-                        var base64 = Convert.ToBase64String(b);
                         libSqlValues.Add(new LibSqlValue()
                         {
                             Type = LibSqlValueType.Blob,
                             Base64 = b
+                        });
+                    }
+                    else if (arg is bool boolVal)
+                    {
+                        libSqlValues.Add(new LibSqlValue()
+                        {
+                            Type = LibSqlValueType.Integer,
+                            Value = (boolVal ? 1 : 0).ToString()
                         });
                     }
                     else if (arg is DateTime dt)
@@ -137,7 +152,7 @@ namespace Bunny.LibSql.Client
                     }
                 }
             }
-            
+
             return libSqlValues;
         }
     }

@@ -165,7 +165,7 @@ You can easily insert, update, or delete records using InsertAsync, UpdateAsync,
 ### 📥 Insert a record
 Insert records using InsertAsync.
 ```csharp
-await db.Users.UpdateAsync(new User
+await db.Users.InsertAsync(new User
 {
     id = "1",
     name = "Alice"
@@ -269,7 +269,7 @@ await db.Client.QueryAsync("DELETE FROM Users");
 
 ### 🔢 Get a scalar value
 ```csharp
-var count = await db.Client.QueryScalarAsync<int>("SELECT COUNT(*) FROM Users");
+var count = await db.Client.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Users");
 ```
 
 ## 🧩 Attributes
@@ -281,9 +281,12 @@ The Bunny.LibSQL.Client ORM system uses attributes to define and control table s
 | `Table`        | Specifies a custom table name for the entity. If omitted, class name is used. |
 | `Key`          | Marks the property as the primary key of the table.                         |
 | `Index`        | Creates an index on the annotated property for faster lookups.              |
-| `ForeignKey`   | Defines a relationship to another table by specifying the foreign key property name. |
-| `AutoInclude`  | Enables eager loading of the related property automatically during queries. |
 | `Unique`       | Marks the field with the UNIQUE constraint, ensuring a unique value in every row. |
+| `ForeignKeyFor`| Marks a property as a foreign key for the given entity type.                |
+| `ManyToMany`   | Defines a many-to-many relationship via a connection model type.            |
+| `Join`         | Specifies the child-table FK column name for a join.                        |
+| `AutoInclude`  | Enables eager loading of the related property automatically during queries. |
+| `BlobSize`     | Sets the expected byte size for `F32Blob` properties.                       |
 
 
 ## 🧮 Supported Data Types
