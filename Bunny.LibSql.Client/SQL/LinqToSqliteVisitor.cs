@@ -163,6 +163,30 @@ public class LinqToSqliteVisitor : ExpressionVisitor
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
+        // Handle operator overloads like string.op_Equality / op_Inequality that may appear as method calls
+        if ((node.Method.Name == "op_Equality" || node.Method.Name == "op_Inequality") && node.Arguments.Count == 2)
+        {
+            AppendBinary(node.Arguments[0], node.Method.Name == "op_Equality" ? "=" : "!=", node.Arguments[1]);
+            return node;
+        }
+
+        // Handle Equals as a binary equality
+        if (node.Method.Name == "Equals")
+        {
+            if (node.Object != null && node.Arguments.Count == 1)
+            {
+                AppendBinary(node.Object, "=", node.Arguments[0]);
+                return node;
+            }
+            if (node.Object == null && node.Arguments.Count == 2)
+            {
+                AppendBinary(node.Arguments[0], "=", node.Arguments[1]);
+                return node;
+            }
+
+            throw new NotSupportedException("Unsupported Equals overload in LINQ query.");
+        }
+
         // Handle Where
         if (node.Method.Name == "Count" && node.Method.DeclaringType == typeof(Queryable))
         {
@@ -435,6 +459,15 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         // Fallback or throw for unhandled methods
         // In a real provider, you might visit arguments if it's a sub-query or part of the projection
         return base.VisitMethodCall(node); // Or throw new NotSupportedException($"Method {node.Method.Name} not supported.");
+    }
+
+    private void AppendBinary(Expression left, string op, Expression right)
+    {
+        _sqlBuilder.Append("(");
+        Visit(left);
+        _sqlBuilder.Append($" {op} ");
+        Visit(right);
+        _sqlBuilder.Append(")");
     }
 
     protected override Expression VisitBinary(BinaryExpression node)
