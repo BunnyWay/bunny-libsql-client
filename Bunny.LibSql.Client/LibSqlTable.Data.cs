@@ -17,7 +17,7 @@ public partial class LibSqlTable<T>
         {
             ValidateEntity(item);
         }
-        
+
         var query = SqlQueryBuilder.BuildInsertQuery<T>(TableName, item);
         var resp = await Db.Client.QueryAsync(query);
         AssignLastInsertRowId(item, resp);
@@ -30,7 +30,7 @@ public partial class LibSqlTable<T>
         {
             throw new ArgumentException($"The item does not have a value for the primary key '{PrimaryKeyProperty}'.");
         }
-        
+
         var query = SqlQueryBuilder.BuildUpdateQuery(TableName, item, PrimaryKeyProperty.Name, keyValue);
         await Db.Client.QueryAsync(query);
     }
@@ -42,34 +42,42 @@ public partial class LibSqlTable<T>
         {
             throw new ArgumentException($"The item does not have a value for the primary key '{PrimaryKeyProperty}'.");
         }
-        
+
         var query = SqlQueryBuilder.BuildDeleteQuery(TableName, PrimaryKeyProperty.Name, keyValue);
         await Db.Client.QueryAsync(query);
     }
-    
-    // TODO: update this and add a test
+
     private void AssignLastInsertRowId(T item, PipelineResponse? pipelineResponse, int itemIndex = 0)
     {
-        // Item index uses a different last_insert_rowid for each item
-        var newKey = pipelineResponse?.Results?.Skip(itemIndex).FirstOrDefault()?.Response?.Result?.LastInsertRowId;
-        if (newKey == null)
-        {
-            throw new InvalidOperationException("Failed to retrieve the last insert row ID.");
-        }
-        
-        // TODO: bool, short etc (document / verify the supported properties)
         var keyProperty = GetPrimaryKeyProperty();
+        var currentValue = keyProperty.GetValue(item);
+
+        // If the key is a string and already has a value (e.g., a UUID), do not overwrite it.
+        if (currentValue is string strVal && !string.IsNullOrEmpty(strVal))
+        {
+            return;
+        }
+
+        // For numeric types, overwrite only if the value is 0 (default)
+        if (currentValue is int intVal && intVal != 0 ||
+            currentValue is long longVal && longVal != 0)
+        {
+            return;
+        }
+
+        var rawKey = pipelineResponse?.Results?.Skip(itemIndex).FirstOrDefault()?.Response?.Result?.LastInsertRowId;
+        if (rawKey == null) return;
+
+        // LastInsertRowId may be deserialized as JsonElement from JSON responses
+        var newKey = rawKey is System.Text.Json.JsonElement jsonEl ? jsonEl.GetInt64() : Convert.ToInt64(rawKey);
+
         if (keyProperty.PropertyType == typeof(int))
         {
-            keyProperty.SetValue(item, newKey as int?);
-        }
-        else if (keyProperty.PropertyType == typeof(float))
-        {
-            keyProperty.SetValue(item, newKey as float?);
+            keyProperty.SetValue(item, (int)newKey);
         }
         else if (keyProperty.PropertyType == typeof(long))
         {
-            keyProperty.SetValue(item, newKey as long?);
+            keyProperty.SetValue(item, newKey);
         }
         else if (keyProperty.PropertyType == typeof(string))
         {
@@ -80,7 +88,7 @@ public partial class LibSqlTable<T>
             throw new InvalidOperationException($"Unsupported primary key type: {keyProperty.PropertyType.Name}");
         }
     }
-    
+
     private void ValidateEntity(T entity)
     {
         var ctx = new ValidationContext(entity);
