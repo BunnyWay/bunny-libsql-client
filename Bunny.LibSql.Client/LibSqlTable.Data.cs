@@ -5,7 +5,6 @@ using Bunny.LibSql.Client.SQL;
 
 namespace Bunny.LibSql.Client;
 
-// TODO: add helper methods for multi-update, multi-delete and multi-insert
 public partial class LibSqlTable<T>
 {
     public async Task InsertAsync(T item)
@@ -17,10 +16,28 @@ public partial class LibSqlTable<T>
         {
             ValidateEntity(item);
         }
-        
+
         var query = SqlQueryBuilder.BuildInsertQuery<T>(TableName, item);
         var resp = await Db.Client.QueryAsync(query);
         AssignLastInsertRowId(item, resp);
+    }
+
+    public async Task InsertManyAsync(IEnumerable<T> items)
+    {
+        var itemList = items.ToList();
+        if (itemList.Count == 0) return;
+
+        if (AutoValidateEntities)
+        {
+            foreach (var item in itemList)
+                ValidateEntity(item);
+        }
+
+        var queries = itemList.Select(item => SqlQueryBuilder.BuildInsertQuery<T>(TableName, item)).ToList();
+        var resp = await Db.Client.QueryMultipleAsync(queries);
+
+        for (var i = 0; i < itemList.Count; i++)
+            AssignLastInsertRowId(itemList[i], resp, i);
     }
 
     public async Task UpdateAsync(T item)
@@ -30,9 +47,24 @@ public partial class LibSqlTable<T>
         {
             throw new ArgumentException($"The item does not have a value for the primary key '{PrimaryKeyProperty}'.");
         }
-        
+
         var query = SqlQueryBuilder.BuildUpdateQuery(TableName, item, PrimaryKeyProperty.Name, keyValue);
         await Db.Client.QueryAsync(query);
+    }
+
+    public async Task UpdateManyAsync(IEnumerable<T> items)
+    {
+        var itemList = items.ToList();
+        if (itemList.Count == 0) return;
+
+        var queries = itemList.Select(item =>
+        {
+            var keyValue = PrimaryKeyProperty.GetValue(item)
+                ?? throw new ArgumentException($"The item does not have a value for the primary key '{PrimaryKeyProperty}'.");
+            return SqlQueryBuilder.BuildUpdateQuery(TableName, item, PrimaryKeyProperty.Name, keyValue);
+        }).ToList();
+
+        await Db.Client.QueryMultipleAsync(queries);
     }
 
     public async Task DeleteAsync(T item)
@@ -42,9 +74,24 @@ public partial class LibSqlTable<T>
         {
             throw new ArgumentException($"The item does not have a value for the primary key '{PrimaryKeyProperty}'.");
         }
-        
+
         var query = SqlQueryBuilder.BuildDeleteQuery(TableName, PrimaryKeyProperty.Name, keyValue);
         await Db.Client.QueryAsync(query);
+    }
+
+    public async Task DeleteManyAsync(IEnumerable<T> items)
+    {
+        var itemList = items.ToList();
+        if (itemList.Count == 0) return;
+
+        var queries = itemList.Select(item =>
+        {
+            var keyValue = PrimaryKeyProperty.GetValue(item)
+                ?? throw new ArgumentException($"The item does not have a value for the primary key '{PrimaryKeyProperty}'.");
+            return SqlQueryBuilder.BuildDeleteQuery(TableName, PrimaryKeyProperty.Name, keyValue);
+        }).ToList();
+
+        await Db.Client.QueryMultipleAsync(queries);
     }
     
     // TODO: update this and add a test
