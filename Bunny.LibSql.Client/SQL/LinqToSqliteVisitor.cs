@@ -20,7 +20,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
     private bool _isCount;
     private bool _isSum;
     private string? _sumColumn;
-    
+
     public LinqToSqliteVisitor(List<JoinNavigation> joinNavigations)
     {
         _sqlBuilder = new StringBuilder();
@@ -32,104 +32,104 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         _isSum = false;
     }
 
-     public (string Sql, IEnumerable<object> Parameters) Translate(Expression expression)
+    public (string Sql, IEnumerable<object> Parameters) Translate(Expression expression)
+    {
+        _sqlBuilder.Clear();
+        _parameters.Clear();
+        _orderByClauses.Clear();
+        _columnAliases.Clear();
+        _skip = 0;
+        _take = -1;
+        _isCount = false; // reset count flag
+
+        Visit(expression);
+
+        // Build SELECT clause
+        var finalSql = new StringBuilder();
+        finalSql.Append("SELECT ");
+
+        if (_isCount)
         {
-            _sqlBuilder.Clear();
-            _parameters.Clear();
-            _orderByClauses.Clear();
-            _columnAliases.Clear();
-            _skip = 0;
-            _take = -1;
-            _isCount = false; // reset count flag
-
-            Visit(expression);
-
-            // Build SELECT clause
-            var finalSql = new StringBuilder();
-            finalSql.Append("SELECT ");
-
-            if (_isCount)
+            // For Count queries, use COUNT(*)
+            finalSql.Append("COUNT(*)");
+        }
+        else if (_isSum)
+        {
+            if (string.IsNullOrEmpty(_sumColumn))
+                throw new InvalidOperationException("Unable to determine column for SUM.");
+            finalSql.Append($"SUM({_sumColumn})");
+        }
+        else if (_columnAliases.Any())
+        {
+            finalSql.Append(string.Join(", ", _columnAliases.Select(kvp => $"{kvp.Key} AS {kvp.Value}")));
+        }
+        else
+        {
+            var tableName = GetTableName(expression);
+            if (tableName == null)
             {
-                // For Count queries, use COUNT(*)
-                finalSql.Append("COUNT(*)");
+                throw new InvalidOperationException("Unable to determine table name for SELECT clause.");
             }
-            else if (_isSum)
-            {
-                if (string.IsNullOrEmpty(_sumColumn))
-                    throw new InvalidOperationException("Unable to determine column for SUM.");
-                finalSql.Append($"SUM({_sumColumn})");
-            }
-            else if (_columnAliases.Any())
-            {
-                finalSql.Append(string.Join(", ", _columnAliases.Select(kvp => $"{kvp.Key} AS {kvp.Value}")));
-            }
+
+            if (!string.IsNullOrEmpty(tableName))
+                finalSql.Append($"{tableName}.*");
             else
-            {
-                var tableName = GetTableName(expression);
-                if (tableName == null)
-                {
-                    throw new InvalidOperationException("Unable to determine table name for SELECT clause.");
-                }
-                
-                if (!string.IsNullOrEmpty(tableName))
-                    finalSql.Append($"{tableName}.*");
-                else
-                    finalSql.Append("*");
-                
-                foreach (var join in _joinNavigations)
-                {
-                    finalSql.Append($", {join.RightDataType.GetLibSqlTableName()}.*");
-                }
-            }
-
-            // FROM clause with LEFT JOINs
-            var mainTable = GetTableName(expression);
-            finalSql.Append(" FROM ");
-            finalSql.Append(mainTable);
+                finalSql.Append("*");
 
             foreach (var join in _joinNavigations)
             {
-                finalSql.Append(" LEFT JOIN ");
-                finalSql.Append(join.RightDataType.GetLibSqlTableName());
-                finalSql.Append(" ON ");
-                finalSql.Append($"{join.LeftDataType.GetLibSqlTableName()}.{join.LeftProperty.Name} = {join.RightDataType.GetLibSqlTableName()}.{join.RightProperty.Name}");
-                
-                //join.LeftProperty.GetLibSqlPrimaryKeyProperty().Name
+                finalSql.Append($", {join.RightDataType.GetLibSqlTableName()}.*");
             }
-
-            // WHERE clause
-            if (_sqlBuilder.Length > 0)
-            {
-                finalSql.Append(" WHERE ");
-                finalSql.Append(_sqlBuilder.ToString());
-            }
-
-            // ORDER BY (ignored for Count)
-            if (!_isCount && _orderByClauses.Any())
-            {
-                finalSql.Append(" ORDER BY ");
-                finalSql.Append(string.Join(", ", _orderByClauses));
-            }
-
-            // LIMIT & OFFSET (ignored for Count)
-            if (!_isCount)
-            {
-                if (_take > -1)
-                {
-                    finalSql.Append(" LIMIT ");
-                    finalSql.Append(_take);
-                }
-                if (_skip > 0)
-                {
-                    if (_take == -1)
-                        finalSql.Append(" LIMIT -1");
-                    finalSql.Append(" OFFSET ");
-                    finalSql.Append(_skip);
-                }
-            }
-
-            return (finalSql.ToString().TrimEnd() + ";", _parameters);
         }
+
+        // FROM clause with LEFT JOINs
+        var mainTable = GetTableName(expression);
+        finalSql.Append(" FROM ");
+        finalSql.Append(mainTable);
+
+        foreach (var join in _joinNavigations)
+        {
+            finalSql.Append(" LEFT JOIN ");
+            finalSql.Append(join.RightDataType.GetLibSqlTableName());
+            finalSql.Append(" ON ");
+            finalSql.Append($"{join.LeftDataType.GetLibSqlTableName()}.{join.LeftProperty.Name} = {join.RightDataType.GetLibSqlTableName()}.{join.RightProperty.Name}");
+
+            //join.LeftProperty.GetLibSqlPrimaryKeyProperty().Name
+        }
+
+        // WHERE clause
+        if (_sqlBuilder.Length > 0)
+        {
+            finalSql.Append(" WHERE ");
+            finalSql.Append(_sqlBuilder.ToString());
+        }
+
+        // ORDER BY (ignored for Count)
+        if (!_isCount && _orderByClauses.Any())
+        {
+            finalSql.Append(" ORDER BY ");
+            finalSql.Append(string.Join(", ", _orderByClauses));
+        }
+
+        // LIMIT & OFFSET (ignored for Count)
+        if (!_isCount)
+        {
+            if (_take > -1)
+            {
+                finalSql.Append(" LIMIT ");
+                finalSql.Append(_take);
+            }
+            if (_skip > 0)
+            {
+                if (_take == -1)
+                    finalSql.Append(" LIMIT -1");
+                finalSql.Append(" OFFSET ");
+                finalSql.Append(_skip);
+            }
+        }
+
+        return (finalSql.ToString().TrimEnd() + ";", _parameters);
+    }
 
     private string? GetTableName(Expression expression)
     {
@@ -145,7 +145,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         {
             // This is a simplistic way; real-world scenarios might involve reflection
             // or a dedicated mechanism to resolve entity types to table names.
-            
+
             var type = queryable.ElementType;
             // Get table name attribute
             var tableAttribute = type.GetCustomAttribute<TableAttribute>();
@@ -153,7 +153,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
             {
                 return tableAttribute.Name;
             }
-            
+
             return queryable.ElementType.Name;
         }
         // Add more sophisticated table name resolution as needed
@@ -227,7 +227,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
                     var argument = newExp.Arguments[i];
                     if (argument is MemberExpression memberExpArg)
                     {
-                         _columnAliases[GetColumnName(memberExpArg)] = member.Name;
+                        _columnAliases[GetColumnName(memberExpArg)] = member.Name;
                     }
                     else
                     {
@@ -238,7 +238,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
             }
             else if (lambda.Body is MemberExpression memberExp) // Handles single member selection: x => x.ColA
             {
-                 _columnAliases[GetColumnName(memberExp)] = memberExp.Member.Name; // Or a preferred alias
+                _columnAliases[GetColumnName(memberExp)] = memberExp.Member.Name; // Or a preferred alias
             }
             else
             {
@@ -277,7 +277,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
 
             // 2) Unwrap the lambda: e => e.full_emb.VectorDistanceCos(bruh12)
             var lambda = (LambdaExpression)StripQuotes(node.Arguments[1]);
-            
+
             // 3) If the body is a call to our vector-distance method, special-case it
             if (lambda.Body is MethodCallExpression mc
                 && mc.Method.Name == "VectorDistanceCos")
@@ -285,7 +285,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
                 // Figure out which argument is the "column"
                 // If you declared it as an instance method: bruh.full_emb.VectorDistanceCos(arg)
                 // then mc.Object is your MemberExpression
-                var columnExpr = mc.Object as MemberExpression 
+                var columnExpr = mc.Object as MemberExpression
                                  ?? mc.Arguments[0] as MemberExpression;
                 if (columnExpr == null)
                     throw new NotSupportedException("Could not map VectorDistanceCos column");
@@ -332,7 +332,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
             // We assume OrderBy was called first, so the source is already visited.
             // If not, this would need more complex handling to ensure correct order of visitation.
             var lambda = (LambdaExpression)StripQuotes(node.Arguments[1]);
-             var memberExpression = lambda.Body as MemberExpression;
+            var memberExpression = lambda.Body as MemberExpression;
             if (memberExpression == null && lambda.Body is UnaryExpression unary && unary.NodeType == ExpressionType.Convert)
             {
                 memberExpression = unary.Operand as MemberExpression;
@@ -410,25 +410,18 @@ public class LinqToSqliteVisitor : ExpressionVisitor
                  node.Arguments.Count == 2)
         {
             Visit(node.Arguments[1]); // This should be the column (e.g., x.Column)
-            _sqlBuilder.Append(" IN (");
-
-            var listExpression = node.Arguments[0];
-            var list = GetExpressionValue(listExpression) as IEnumerable;
-            if (list == null)
-            {
-                throw new NotSupportedException("Contains argument must be a collection.");
-            }
-
-            bool first = true;
-            foreach (var item in list)
-            {
-                if (!first) _sqlBuilder.Append(", ");
-                _sqlBuilder.Append("?");
-                AddParameter(item);
-                first = false;
-            }
-            _sqlBuilder.Append(")");
-            return node; // Handled
+            AppendInClause(node.Arguments[0]);
+            return node;
+        }
+        // Handle instance List<T>.Contains / ICollection<T>.Contains (e.g., categoryIds.Contains(x.Id))
+        else if (node.Method.Name == "Contains" &&
+                 node.Object != null &&
+                 node.Arguments.Count == 1 &&
+                 node.Method.DeclaringType != typeof(string))
+        {
+            Visit(node.Arguments[0]); // The column (e.g., x.Id)
+            AppendInClause(node.Object);
+            return node;
         }
 
 
@@ -469,17 +462,17 @@ public class LinqToSqliteVisitor : ExpressionVisitor
                 _sqlBuilder.Append(" >= ");
                 break;
             case ExpressionType.Add:
-                 _sqlBuilder.Append(" + ");
-                 break;
+                _sqlBuilder.Append(" + ");
+                break;
             case ExpressionType.Subtract:
-                 _sqlBuilder.Append(" - ");
-                 break;
+                _sqlBuilder.Append(" - ");
+                break;
             case ExpressionType.Multiply:
-                 _sqlBuilder.Append(" * ");
-                 break;
+                _sqlBuilder.Append(" * ");
+                break;
             case ExpressionType.Divide:
-                 _sqlBuilder.Append(" / ");
-                 break;
+                _sqlBuilder.Append(" / ");
+                break;
             default:
                 throw new NotSupportedException($"Binary operator {node.NodeType} not supported.");
         }
@@ -498,7 +491,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
             _sqlBuilder.Append(GetColumnName(node));
             return node;
         }
-    
+
         // Otherwise, the expression represents a value that needs to be evaluated and parameterized.
         // This handles captured variables like "ticket.Id".
         // Your GetExpressionValue method is capable of compiling this expression fragment to get its value.
@@ -506,7 +499,7 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         _sqlBuilder.Append("?");
         return node;
     }
-    
+
     /*protected override Expression VisitMember(MemberExpression node)
     {
         // This is where you'd map CLR properties to database column names
@@ -607,6 +600,27 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         return member.Name;
     }
 
+    private void AppendInClause(Expression listExpression)
+    {
+        _sqlBuilder.Append(" IN (");
+
+        var list = GetExpressionValue(listExpression) as IEnumerable;
+        if (list == null)
+        {
+            throw new NotSupportedException("Contains argument must be a collection.");
+        }
+
+        bool first = true;
+        foreach (var item in list)
+        {
+            if (!first) _sqlBuilder.Append(", ");
+            _sqlBuilder.Append('?');
+            AddParameter(item);
+            first = false;
+        }
+        _sqlBuilder.Append(')');
+    }
+
     private object GetExpressionValue(Expression expression)
     {
         // If it's a constant, just return its value
@@ -632,14 +646,14 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         // or for accessing elements of a collection.
         try
         {
-             // Create a lambda expression of type Func<object> to get the value.
+            // Create a lambda expression of type Func<object> to get the value.
             var objectMember = Expression.Convert(expression, typeof(object));
             var getterLambda = Expression.Lambda<Func<object>>(objectMember);
             return getterLambda.Compile()();
         }
         catch (Exception ex)
         {
-             throw new NotSupportedException($"Could not get value from expression: {expression}. Error: {ex.Message}");
+            throw new NotSupportedException($"Could not get value from expression: {expression}. Error: {ex.Message}");
         }
     }
 }
