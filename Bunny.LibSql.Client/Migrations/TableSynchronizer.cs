@@ -1,13 +1,13 @@
+using Bunny.LibSql.Client.Attributes;
+using Bunny.LibSql.Client.Migrations.InternalModels;
+using Bunny.LibSql.Client.SQL;
+using Bunny.LibSql.Client.TypeHandling;
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Bunny.LibSql.Client.Attributes;
-using Bunny.LibSql.Client.Migrations.InternalModels;
-using Bunny.LibSql.Client.SQL;
-using Bunny.LibSql.Client.TypeHandling;
 
 namespace Bunny.LibSql.Client.Migrations;
 
@@ -29,7 +29,7 @@ public static class TableSynchronizer
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead && p.CanWrite && p.PropertyType.IsLibSqlSupportedType())
             .ToArray();
-        
+
         var sql = new List<string>();
 
         var existingColsByName = (existingColumns ?? [])
@@ -49,19 +49,14 @@ public static class TableSynchronizer
                 var isPk = IsPrimaryKey(p);
 
                 // For PKs, SQLite may report the type differently.
-                // An `INTEGER PRIMARY KEY` is the only type that supports AUTOINCREMENT.
-                if (isPk && desiredType == "INTEGER" && colInfo.type.Equals("INTEGER", StringComparison.OrdinalIgnoreCase))
+                if (!desiredType.Equals(colInfo.type, StringComparison.OrdinalIgnoreCase))
                 {
-                    // It's an integer primary key, types match. Check other constraints.
-                }
-                else if (!desiredType.Equals(colInfo.type, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true; // Type has changed
+                    return true;
                 }
 
                 if (isPk != (colInfo.pk > 0)) return true; // PK status changed
                 if (IsNotNull(p) != colInfo.notnull && !isPk) return true; // Nullability changed (PK is implicitly not null)
-                
+
                 // Note: The base `table_info` doesn't include UNIQUE constraints for non-PK columns.
                 // We check that separately against the index list.
                 if (IsUnique(p) != IsColumnUniqueInDb(p.Name, tableName, existingIndexes)) return true;
@@ -169,17 +164,23 @@ public static class TableSynchronizer
                 sql.Add($"DROP INDEX IF EXISTS {idxName};");
             }
         }
-        
+
         return sql;
     }
-    
+
     // --- Helper methods for checking property attributes ---
-    
     private static bool IsPrimaryKey(PropertyInfo p)
     {
         var keyAttr = p.GetCustomAttribute<KeyAttribute>();
-        var isIntegerType = p.PropertyType == typeof(int) || p.PropertyType == typeof(long);
-        return keyAttr != null && isIntegerType;
+        return keyAttr != null && IsValidPrimaryKey(p);
+    }
+
+    private static bool IsValidPrimaryKey(PropertyInfo p)
+    {
+        var type = p.PropertyType;
+        return type == typeof(int) ||       // INTEGER
+               type == typeof(long) ||      // INTEGER
+               type == typeof(string);      // TEXT
     }
 
     private static bool IsNotNull(PropertyInfo p)
@@ -206,27 +207,31 @@ public static class TableSynchronizer
                         // This regex ensures we match the column exactly, e.g., `(Name)` and not `(NameSuffix)`
                         && Regex.IsMatch(idx.sql, $@"\(\s*`?{Regex.Escape(columnName)}`?\s*\)", RegexOptions.IgnoreCase));
     }
-    
+
     private static bool IsIndexForUniqueConstraint(SqliteMasterInfo index)
     {
         // A UNIQUE constraint creates a unique index. The SQL definition will contain "CREATE UNIQUE INDEX".
         // SQLite also creates automatic indexes for PRIMARY KEYs, which we want to ignore here.
-        return index.sql != null 
+        return index.sql != null
                && index.sql.Contains("CREATE UNIQUE INDEX", StringComparison.OrdinalIgnoreCase)
                && !index.name.StartsWith("sqlite_autoindex"); // Exclude PK indexes
     }
-    
+
     private static string BuildDesiredColumnDefinition(PropertyInfo p)
     {
+        var typeSql = SqliteToNativeTypeMap.ToSqlType(p);
+
         if (IsPrimaryKey(p))
         {
-            return $"{p.Name} INTEGER PRIMARY KEY AUTOINCREMENT";
+            if (string.Equals(typeSql, "INTEGER"))
+                return $"{p.Name} INTEGER PRIMARY KEY AUTOINCREMENT";
+            else
+                return $"{p.Name} {typeSql} PRIMARY KEY";
         }
 
-        var typeSql = SqliteToNativeTypeMap.ToSqlType(p);
         var nullDef = IsNotNull(p) ? " NOT NULL" : string.Empty;
         var uniqueDef = IsUnique(p) ? " UNIQUE" : string.Empty;
-    
+
         return $"{p.Name} {typeSql}{nullDef}{uniqueDef}";
     }
 }

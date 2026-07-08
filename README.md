@@ -284,7 +284,7 @@ The Bunny.LibSQL.Client ORM system uses attributes to define and control table s
 | `ForeignKey`   | Defines a relationship to another table by specifying the foreign key property name. |
 | `AutoInclude`  | Enables eager loading of the related property automatically during queries. |
 | `Unique`       | Marks the field with the UNIQUE constraint, ensuring a unique value in every row. |
-
+> ⚠️ **Note:** Composite keys are not supported
 
 ## 🧮 Supported Data Types
 
@@ -302,5 +302,4 @@ Bunny.LibSQL.Client automatically maps common C# types to supported LibSQL colum
 | `bool`      | Boolean value                            | Stored as `0` (false) or `1` (true)  |
 | `byte[]`    | Binary data (e.g., files, images)        | Maps to `BLOB`                       |
 | `F32Blob`   | Vector F32 blob (e.g. ai embeddings      | Maps to `F32_BLOB`                   |
-
-> ⚠️ **Note:** Nullable variants (e.g., `int?`, `bool?`, etc.) are also supported and will map to nullable columns.
+> ℹ️ **Note:** Nullable variants (e.g., `int?`, `bool?`, etc.) are also supported and will map to nullable columns.
